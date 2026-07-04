@@ -8,28 +8,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./com
 import { Checkbox } from "./components/ui/checkbox"
 import { Input } from "./components/ui/input"
 import { Label } from "./components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select"
 import { Textarea } from "./components/ui/textarea"
 import { buildGoogleSearchUrl, buildJobSearchQuery } from "./query"
 import { deleteJob, getJobs, upsertJob } from "./storage"
-import { getActiveTabInfo, openUrl, type ActiveTabInfo } from "./tabs"
+import { openUrl } from "./tabs"
 import type { JobsByUrl, JobStatus, SavedJob } from "./types"
 
 import "./style.css"
 
-const STATUSES: JobStatus[] = ["seen", "saved", "skipped", "applied"]
+const ACTIONABLE_STATUSES: JobStatus[] = ["seen", "saved", "applied"]
 
 const STATUS_LABELS: Record<JobStatus, string> = {
   seen: "Seen",
   saved: "Saved",
-  skipped: "Skipped",
   applied: "Applied"
 }
 
 const STATUS_CLASSES: Record<JobStatus, string> = {
   seen: "border-[#b58900]/50 bg-[#b58900]/15 text-[#b58900]",
   saved: "border-[#2aa198]/50 bg-[#2aa198]/15 text-[#2aa198]",
-  skipped: "border-[#586e75]/70 bg-[#073642] text-[#93a1a1]",
   applied: "border-[#859900]/50 bg-[#859900]/15 text-[#859900]"
 }
 
@@ -38,17 +35,6 @@ function parseCommaList(value: string): string[] {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean)
-}
-
-function createJob(tab: ActiveTabInfo, status: JobStatus): Omit<SavedJob, "firstSeenAt" | "lastSeenAt"> {
-  return {
-    id: tab.canonicalUrl,
-    url: tab.url,
-    canonicalUrl: tab.canonicalUrl,
-    title: tab.title,
-    source: tab.source,
-    status
-  }
 }
 
 export default function Popup() {
@@ -60,14 +46,11 @@ export default function Popup() {
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showAtsSites, setShowAtsSites] = useState(false)
   const [showQuery, setShowQuery] = useState(false)
-  const [activeTab, setActiveTab] = useState<ActiveTabInfo | null>(null)
   const [jobs, setJobs] = useState<JobsByUrl>({})
   const [filter, setFilter] = useState<JobStatus | "all">("all")
 
   async function refresh() {
-    const [tab, storedJobs] = await Promise.all([getActiveTabInfo(), getJobs()])
-    setActiveTab(tab)
-    setJobs(storedJobs)
+    setJobs(await getJobs())
   }
 
   useEffect(() => {
@@ -86,7 +69,6 @@ export default function Popup() {
     [days, excludedTerms, remote, roles, selectedSites]
   )
 
-  const currentJob = activeTab ? jobs[activeTab.canonicalUrl] : null
   const selectedSiteCount = selectedSites.length
   const visibleJobs = Object.values(jobs)
     .filter((job) => filter === "all" || job.status === filter)
@@ -98,15 +80,6 @@ export default function Popup() {
     }
 
     await openUrl(buildGoogleSearchUrl(query))
-  }
-
-  async function markCurrentJob(status: JobStatus) {
-    if (!activeTab) {
-      return
-    }
-
-    await upsertJob(createJob(activeTab, status))
-    await refresh()
   }
 
   async function removeJob(canonicalUrl: string) {
@@ -239,57 +212,23 @@ export default function Popup() {
       </Card>
 
       <Card className="border-primary/15 bg-card/95">
-        <CardHeader>
-          <CardTitle className="text-base">Current page</CardTitle>
-          <CardDescription>Save this listing and mark where it stands.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {activeTab ? (
-            <>
-              <div className="rounded-lg border bg-background p-3">
-                <p className="line-clamp-2 text-sm font-semibold leading-5">{activeTab.title}</p>
-                <div className="mt-2 flex items-center gap-2">
-                  <Badge variant="outline" className={currentJob ? STATUS_CLASSES[currentJob.status] : "bg-secondary"}>
-                    {currentJob ? STATUS_LABELS[currentJob.status] : "New"}
-                  </Badge>
-                  <span className="truncate text-xs text-muted-foreground">{activeTab.source}</span>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {STATUSES.map((status) => (
-                  <Button key={status} variant="secondary" size="sm" onClick={() => markCurrentJob(status)}>
-                    Mark {STATUS_LABELS[status]}
-                  </Button>
-                ))}
-              </div>
-            </>
-          ) : (
-            <p className="rounded-lg border bg-background p-3 text-sm text-muted-foreground">
-              Open a regular web page to save it as a job.
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className="border-primary/15 bg-card/95">
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <div>
             <CardTitle className="text-base">Saved jobs</CardTitle>
             <CardDescription>{visibleJobs.length} visible catches</CardDescription>
           </div>
-          <Select value={filter} onValueChange={(value) => setFilter(value as JobStatus | "all")}>
-            <SelectTrigger className="w-[130px] bg-background">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              {STATUSES.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {STATUS_LABELS[status]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <select
+            className="h-9 w-[130px] rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            value={filter}
+            onChange={(event) => setFilter(event.currentTarget.value as JobStatus | "all")}
+          >
+            <option value="all">All</option>
+            {ACTIONABLE_STATUSES.map((status) => (
+              <option key={status} value={status}>
+                {STATUS_LABELS[status]}
+              </option>
+            ))}
+          </select>
         </CardHeader>
         <CardContent>
           <div className="scrollbar-thin grid max-h-[280px] gap-2 overflow-auto pr-1">

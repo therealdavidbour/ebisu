@@ -1,4 +1,4 @@
-export type JobStatus = "seen" | "saved" | "skipped" | "applied"
+export type JobStatus = "seen" | "saved" | "applied"
 
 export type SavedJob = {
   id: string

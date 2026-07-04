@@ -2,19 +2,17 @@ import { DEFAULT_ATS_SITES } from "./ats"
 import type { JobStatus, SavedJob } from "./types"
 import { getHostname } from "./url"
 
-export const CONTENT_STATUSES: JobStatus[] = ["seen", "saved", "skipped", "applied"]
+export const CONTENT_STATUSES: JobStatus[] = ["seen", "saved", "applied"]
 
 export const CONTENT_STATUS_LABELS: Record<JobStatus, string> = {
   seen: "Seen",
   saved: "Saved",
-  skipped: "Skipped",
   applied: "Applied"
 }
 
 export const CONTENT_STATUS_THEME: Record<JobStatus, string> = {
   seen: "border-color:#b58900;background:rgba(181,137,0,.14);color:#b58900;",
   saved: "border-color:#2aa198;background:rgba(42,161,152,.14);color:#2aa198;",
-  skipped: "border-color:#586e75;background:#073642;color:#93a1a1;",
   applied: "border-color:#859900;background:rgba(133,153,0,.14);color:#859900;"
 }
 

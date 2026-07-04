@@ -5,8 +5,43 @@ import type { JobsByUrl, JobStatus, SavedJob } from "./types"
 const storage = new Storage({ area: "local" })
 const JOBS_KEY = "jobsByCanonicalUrl"
 
+type StoredJobRecord = Record<string, Omit<SavedJob, "status"> & { status: JobStatus | "skipped" }>
+
+function normalizeJobs(jobs: StoredJobRecord): { jobs: JobsByUrl; changed: boolean } {
+  let changed = false
+  const normalized: JobsByUrl = {}
+
+  for (const [canonicalUrl, job] of Object.entries(jobs)) {
+    if (job.status === "skipped") {
+      normalized[canonicalUrl] = {
+        ...job,
+        status: "seen"
+      }
+      changed = true
+      continue
+    }
+
+    normalized[canonicalUrl] = {
+      ...job,
+      status: job.status
+    }
+  }
+
+  return {
+    jobs: normalized,
+    changed
+  }
+}
+
 export async function getJobs(): Promise<JobsByUrl> {
-  return (await storage.get<JobsByUrl>(JOBS_KEY)) ?? {}
+  const storedJobs = (((await storage.get<StoredJobRecord>(JOBS_KEY)) ?? {}) as StoredJobRecord)
+  const { jobs, changed } = normalizeJobs(storedJobs)
+
+  if (changed) {
+    await storage.set(JOBS_KEY, jobs)
+  }
+
+  return jobs
 }
 
 export async function upsertJob(job: Omit<SavedJob, "firstSeenAt" | "lastSeenAt">): Promise<SavedJob> {

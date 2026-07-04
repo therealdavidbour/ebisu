@@ -80,6 +80,8 @@ function ensureStyle() {
       gap: 6px;
       margin-top: 8px;
       padding: 8px 10px;
+      position: relative;
+      z-index: 2;
       border: 1px solid #073642;
       border-radius: 10px;
       background: rgba(0, 43, 54, 0.9);
@@ -120,6 +122,8 @@ function ensureStyle() {
       background: #073642;
       color: #93a1a1;
       cursor: pointer;
+      position: relative;
+      z-index: 3;
       font: inherit;
       font-size: 10px;
       font-weight: 700;
@@ -173,6 +177,33 @@ function applyResultState(container: HTMLElement, job: SavedJob | null) {
   container.style.color = "#93a1a1"
 }
 
+function stopGoogleResultEvent(event: Event) {
+  event.preventDefault()
+  event.stopPropagation()
+  if (typeof event.stopImmediatePropagation === "function") {
+    event.stopImmediatePropagation()
+  }
+}
+
+async function handleStatusAction(event: Event, target: ResultTarget, status: (typeof CONTENT_STATUSES)[number]) {
+  const button = event.currentTarget as HTMLButtonElement | null
+
+  stopGoogleResultEvent(event)
+
+  if (!button || button.dataset.ebisuBusy === "true") {
+    return
+  }
+
+  button.dataset.ebisuBusy = "true"
+
+  try {
+    await upsertJob(createSavedJob(target, status))
+    await runScan()
+  } finally {
+    button.dataset.ebisuBusy = "false"
+  }
+}
+
 function upsertToolbar(target: ResultTarget, jobs: Record<string, SavedJob>) {
   const existing = target.container.querySelector<HTMLElement>(`[${TOOLBAR_ATTR}]`)
   const toolbar = existing ?? document.createElement("div")
@@ -198,13 +229,10 @@ function upsertToolbar(target: ResultTarget, jobs: Record<string, SavedJob>) {
       button.type = "button"
       button.dataset.ebisuStatus = status
       button.className = "ebisu-toolbar__button"
-      button.addEventListener("click", async (event) => {
-        event.preventDefault()
-        event.stopPropagation()
-
-        await upsertJob(createSavedJob(target, status))
-        await runScan()
+      button.addEventListener("pointerdown", (event) => {
+        void handleStatusAction(event, target, status)
       })
+      button.addEventListener("click", stopGoogleResultEvent)
       actions.append(button)
     }
 
