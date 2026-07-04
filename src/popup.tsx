@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react"
 import { ExternalLink, MapPin, Search, Trash2 } from "lucide-react"
 
 import { DEFAULT_ATS_SITES } from "./ats"
@@ -9,6 +9,7 @@ import { Checkbox } from "./components/ui/checkbox"
 import { Input } from "./components/ui/input"
 import { Label } from "./components/ui/label"
 import { Textarea } from "./components/ui/textarea"
+import { getLocationSuggestions } from "./locations"
 import { buildGoogleSearchUrl, buildJobSearchQuery } from "./query"
 import { deleteJob, getJobs, upsertJob } from "./storage"
 import { openUrl } from "./tabs"
@@ -40,6 +41,8 @@ function parseCommaList(value: string): string[] {
 export default function Popup() {
   const [roles, setRoles] = useState("")
   const [location, setLocation] = useState("")
+  const [locationFocused, setLocationFocused] = useState(false)
+  const [highlightedLocationIndex, setHighlightedLocationIndex] = useState(0)
   const [days, setDays] = useState("14")
   const [selectedSites, setSelectedSites] = useState(DEFAULT_ATS_SITES)
   const [excludedTerms, setExcludedTerms] = useState("")
@@ -70,6 +73,8 @@ export default function Popup() {
   )
 
   const selectedSiteCount = selectedSites.length
+  const locationSuggestions = useMemo(() => getLocationSuggestions(location), [location])
+  const showLocationSuggestions = locationFocused && locationSuggestions.length > 0
   const visibleJobs = Object.values(jobs)
     .filter((job) => filter === "all" || job.status === filter)
     .sort((a, b) => b.lastSeenAt.localeCompare(a.lastSeenAt))
@@ -93,6 +98,52 @@ export default function Popup() {
     )
   }
 
+  function selectLocationSuggestion(value: string) {
+    setLocation(value)
+    setLocationFocused(false)
+    setHighlightedLocationIndex(0)
+  }
+
+  function handleLocationKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (!showLocationSuggestions) {
+      return
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault()
+      setHighlightedLocationIndex((current) => (current + 1) % locationSuggestions.length)
+      return
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault()
+      setHighlightedLocationIndex((current) =>
+        current === 0 ? locationSuggestions.length - 1 : current - 1
+      )
+      return
+    }
+
+    if (event.key === "Enter") {
+      const suggestion = locationSuggestions[highlightedLocationIndex]
+
+      if (!suggestion) {
+        return
+      }
+
+      event.preventDefault()
+      selectLocationSuggestion(suggestion.value)
+      return
+    }
+
+    if (event.key === "Escape") {
+      setLocationFocused(false)
+    }
+  }
+
+  useEffect(() => {
+    setHighlightedLocationIndex(0)
+  }, [location])
+
   return (
     <main className="min-w-[440px] max-w-[440px] space-y-3 bg-[radial-gradient(circle_at_top_left,hsl(175_59%_40%_/_0.18),transparent_34%),linear-gradient(180deg,#002b36,#073642)] p-3">
       <section className="overflow-hidden rounded-2xl border border-primary/25 bg-card shadow-shrine">
@@ -111,28 +162,58 @@ export default function Popup() {
 
       <Card className="border-primary/15 bg-card/95">
         <CardContent className="space-y-3 p-4">
-          <div className="overflow-hidden rounded-[1.4rem] border border-primary/30 bg-background/90 shadow-sm transition-colors focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/25">
-            <div className="flex min-w-0 items-center gap-2 px-3">
-              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <Input
-                id="roles"
-                placeholder="Job title, keywords, or company"
-                value={roles}
-                onChange={(event) => setRoles(event.currentTarget.value)}
-                className="h-12 rounded-none border-0 bg-transparent px-0 text-[13px] shadow-none placeholder:text-[13px] focus-visible:ring-0"
-              />
+          <div className="relative">
+            <div className="overflow-hidden rounded-[1.4rem] border border-primary/30 bg-background/90 shadow-sm transition-colors focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/25">
+              <div className="flex min-w-0 items-center gap-2 px-3">
+                <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <Input
+                  id="roles"
+                  placeholder="Job title, keywords, or company"
+                  value={roles}
+                  onChange={(event) => setRoles(event.currentTarget.value)}
+                  className="h-12 rounded-none border-0 bg-transparent px-0 text-[13px] shadow-none placeholder:text-[13px] focus-visible:ring-0"
+                />
+              </div>
+              <div className="mx-3 h-px bg-border" />
+              <div className="flex min-w-0 items-center gap-2 px-3">
+                <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <Input
+                  id="location"
+                  placeholder="City, state, or remote"
+                  value={location}
+                  onChange={(event) => setLocation(event.currentTarget.value)}
+                  onFocus={() => setLocationFocused(true)}
+                  onBlur={() => window.setTimeout(() => setLocationFocused(false), 120)}
+                  onKeyDown={handleLocationKeyDown}
+                  className="h-11 rounded-none border-0 bg-transparent px-0 text-[13px] shadow-none placeholder:text-[13px] focus-visible:ring-0"
+                />
+              </div>
             </div>
-            <div className="mx-3 h-px bg-border" />
-            <div className="flex min-w-0 items-center gap-2 px-3">
-              <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <Input
-                id="location"
-                placeholder="City, state, or remote"
-                value={location}
-                onChange={(event) => setLocation(event.currentTarget.value)}
-                className="h-11 rounded-none border-0 bg-transparent px-0 text-[13px] shadow-none placeholder:text-[13px] focus-visible:ring-0"
-              />
-            </div>
+
+            {showLocationSuggestions ? (
+              <div className="absolute inset-x-0 top-full z-20 mt-2 overflow-hidden rounded-2xl border border-primary/20 bg-card shadow-shrine">
+                <div className="grid gap-px bg-border/60 p-px">
+                  {locationSuggestions.map((suggestion, index) => (
+                    <button
+                      key={suggestion.value}
+                      type="button"
+                      className={`flex items-center justify-between gap-3 bg-card px-3 py-2.5 text-left transition-colors ${
+                        index === highlightedLocationIndex ? "bg-muted" : "hover:bg-muted"
+                      }`}
+                      onMouseDown={(event) => {
+                        event.preventDefault()
+                        selectLocationSuggestion(suggestion.value)
+                      }}
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm text-[#fdf6e3]">{suggestion.label}</span>
+                        <span className="block truncate text-xs text-muted-foreground">{suggestion.detail}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <div className="grid gap-2">
