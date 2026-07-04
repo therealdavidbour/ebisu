@@ -8,15 +8,16 @@
     "dev": "plasmo dev",
     "build": "plasmo build",
     "package": "plasmo package",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:ui": "pnpm build && playwright test"
   },
   "dependencies": {
+    "@fontsource/public-sans": "latest",
     "@plasmohq/storage": "latest",
     "@radix-ui/react-checkbox": "latest",
     "@radix-ui/react-label": "latest",
     "@radix-ui/react-select": "latest",
     "@radix-ui/react-slot": "latest",
-    "@fontsource/public-sans": "latest",
     "class-variance-authority": "latest",
     "clsx": "latest",
     "lucide-react": "latest",
@@ -26,17 +27,23 @@
     "tailwind-merge": "latest"
   },
   "devDependencies": {
-    "autoprefixer": "latest",
-    "postcss": "latest",
-    "tailwindcss": "^3.4.17",
+    "@playwright/test": "^1.61.1",
     "@types/chrome": "latest",
     "@types/node": "latest",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "autoprefixer": "latest",
+    "postcss": "latest",
+    "tailwindcss": "^3.4.17",
     "typescript": "^5.6.0"
   },
   "manifest": {
-    "permissions": ["tabs", "storage"],
-    "host_permissions": ["<all_urls>"]
+    "permissions": [
+      "tabs",
+      "storage"
+    ],
+    "host_permissions": [
+      "<all_urls>"
+    ]
   }
 }

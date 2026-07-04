@@ -107,6 +107,11 @@ export default function Popup() {
     setHighlightedLocationIndex(0)
   }
 
+  function handleLocationChange(value: string) {
+    setLocation(value)
+    setLocationFocused(true)
+  }
+
   function handleLocationKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (!showLocationSuggestions) {
       return
@@ -148,7 +153,7 @@ export default function Popup() {
   }, [location])
 
   return (
-    <main className="min-w-[440px] max-w-[440px] space-y-3 bg-[radial-gradient(circle_at_top_left,hsl(175_59%_40%_/_0.18),transparent_34%),linear-gradient(180deg,#002b36,#073642)] p-3">
+    <main className="min-w-[400px] max-w-[400px] space-y-3 bg-[radial-gradient(circle_at_top_left,hsl(175_59%_40%_/_0.18),transparent_34%),linear-gradient(180deg,#002b36,#073642)] p-3">
       <section className="overflow-hidden rounded-2xl border border-primary/25 bg-card shadow-shrine">
         <div className="relative p-4">
           <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-primary/20 blur-2xl" />
@@ -212,8 +217,9 @@ export default function Popup() {
                         id="location"
                         placeholder="City, state, or remote"
                         value={location}
-                        onChange={(event) => setLocation(event.currentTarget.value)}
+                        onChange={(event) => handleLocationChange(event.currentTarget.value)}
                         onFocus={() => setLocationFocused(true)}
+                        onClick={() => setLocationFocused(true)}
                         onBlur={() => window.setTimeout(() => setLocationFocused(false), 120)}
                         onKeyDown={handleLocationKeyDown}
                         className="min-w-0 h-11 rounded-none border-0 bg-transparent px-0 text-[13px] shadow-none placeholder:text-[13px] focus-visible:ring-0"

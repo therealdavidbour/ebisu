@@ -5,3 +5,5 @@ build/
 *.log
 *.tsbuildinfo
 .playwright-mcp/
+playwright-report/
+test-results/
