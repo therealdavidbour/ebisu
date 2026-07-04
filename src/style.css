@@ -120,6 +120,32 @@ label,
   gap: 8px;
 }
 
+.primary-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.primary-actions button {
+  width: 100%;
+}
+
+.primary-actions button:not(.secondary) {
+  padding-block: 10px;
+}
+
+.primary-actions .secondary {
+  justify-self: end;
+  width: auto;
+  padding: 0;
+  background: transparent;
+  color: #6f675a;
+  text-decoration: underline;
+}
+
+.primary-actions .secondary:hover {
+  color: #1d1b16;
+}
+
 .actions button {
   background: #ebe4d6;
   color: #1d1b16;

@@ -34,6 +34,7 @@ export default function Popup() {
   const [days, setDays] = useState("14")
   const [selectedSites, setSelectedSites] = useState(DEFAULT_ATS_SITES)
   const [excludedTerms, setExcludedTerms] = useState("")
+  const [showQuery, setShowQuery] = useState(false)
   const [activeTab, setActiveTab] = useState<ActiveTabInfo | null>(null)
   const [jobs, setJobs] = useState<JobsByUrl>({})
   const [filter, setFilter] = useState<JobStatus | "all">("all")
@@ -134,10 +135,15 @@ export default function Popup() {
             onChange={(event) => setExcludedTerms(event.currentTarget.value)}
           />
         </label>
-        <textarea readOnly value={query} />
-        <button disabled={!query} onClick={search}>
-          Search Google
-        </button>
+        <div className="primary-actions">
+          <button className="secondary" type="button" onClick={() => setShowQuery((current) => !current)}>
+            {showQuery ? "Hide query" : "View query"}
+          </button>
+          <button disabled={!query} onClick={search}>
+            Go
+          </button>
+        </div>
+        {showQuery ? <textarea readOnly value={query} /> : null}
       </section>
 
       <section className="panel">
