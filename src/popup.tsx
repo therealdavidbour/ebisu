@@ -18,6 +18,9 @@ import type { JobsByUrl, JobStatus, SavedJob } from "./types"
 import "./style.css"
 
 const ACTIONABLE_STATUSES: JobStatus[] = ["seen", "saved", "applied"]
+const CONTROL_TABS = ["search", "saved", "advanced"] as const
+
+type ControlTab = (typeof CONTROL_TABS)[number]
 
 const STATUS_LABELS: Record<JobStatus, string> = {
   seen: "Seen",
@@ -46,7 +49,7 @@ export default function Popup() {
   const [days, setDays] = useState("14")
   const [selectedSites, setSelectedSites] = useState(DEFAULT_ATS_SITES)
   const [excludedTerms, setExcludedTerms] = useState("")
-  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [activeTab, setActiveTab] = useState<ControlTab>("search")
   const [showAtsSites, setShowAtsSites] = useState(false)
   const [showQuery, setShowQuery] = useState(false)
   const [jobs, setJobs] = useState<JobsByUrl>({})
@@ -161,190 +164,210 @@ export default function Popup() {
       </section>
 
       <Card className="border-primary/15 bg-card/95">
-        <CardContent className="space-y-3 p-4">
-          <div className="relative w-full max-w-full overflow-x-clip">
-            <div className="overflow-hidden rounded-[1.4rem] border border-primary/30 bg-background/90 shadow-sm transition-colors focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/25">
-              <div className="flex min-w-0 items-center gap-2 px-3">
-                <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <Input
-                  id="roles"
-                  placeholder="Job title, keywords, or company"
-                  value={roles}
-                  onChange={(event) => setRoles(event.currentTarget.value)}
-                  className="min-w-0 h-12 rounded-none border-0 bg-transparent px-0 text-[13px] shadow-none placeholder:text-[13px] focus-visible:ring-0"
-                />
-              </div>
-              <div className="mx-3 h-px bg-border" />
-              <div className="flex min-w-0 items-center gap-2 px-3">
-                <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <Input
-                  id="location"
-                  placeholder="City, state, or remote"
-                  value={location}
-                  onChange={(event) => setLocation(event.currentTarget.value)}
-                  onFocus={() => setLocationFocused(true)}
-                  onBlur={() => window.setTimeout(() => setLocationFocused(false), 120)}
-                  onKeyDown={handleLocationKeyDown}
-                  className="min-w-0 h-11 rounded-none border-0 bg-transparent px-0 text-[13px] shadow-none placeholder:text-[13px] focus-visible:ring-0"
-                />
-              </div>
-            </div>
+        <div className="flex border-b border-primary/15 px-2 pt-2">
+          {CONTROL_TABS.map((tab) => {
+            const isActive = activeTab === tab
 
-            {showLocationSuggestions ? (
-              <div className="absolute left-0 right-0 top-full z-20 mt-2 w-full max-w-full overflow-hidden rounded-2xl border border-primary/20 bg-card shadow-shrine">
-                <div className="scrollbar-thin grid max-h-64 gap-px overflow-y-auto bg-border/60 p-px">
-                  {locationSuggestions.map((suggestion, index) => (
-                    <button
-                      key={suggestion.value}
-                      type="button"
-                      className={`flex w-full min-w-0 items-center justify-between gap-3 bg-card px-3 py-2.5 text-left transition-colors ${
-                        index === highlightedLocationIndex ? "bg-muted" : "hover:bg-muted"
-                      }`}
-                      onMouseDown={(event) => {
-                        event.preventDefault()
-                        selectLocationSuggestion(suggestion.value)
-                      }}
-                    >
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm text-[#fdf6e3]">{suggestion.label}</span>
-                        <span className="block truncate text-xs text-muted-foreground">{suggestion.detail}</span>
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
+            return (
+              <button
+                key={tab}
+                type="button"
+                className={`relative rounded-t-xl px-4 py-2 text-sm font-medium transition-colors ${
+                  isActive
+                    ? "bg-background text-[#fdf6e3] shadow-sm"
+                    : "text-muted-foreground hover:bg-background/60 hover:text-[#fdf6e3]"
+                }`}
+                onClick={() => {
+                  setActiveTab(tab)
+                  setLocationFocused(false)
+                }}
+              >
+                {tab === "search" ? "Search" : tab === "saved" ? "History" : "Advanced Settings"}
+                {isActive ? <span className="absolute inset-x-0 bottom-0 h-px bg-background" /> : null}
+              </button>
+            )
+          })}
+        </div>
 
-          <div className="grid gap-2">
-            <Button className="w-full" disabled={!query} onClick={search}>
-              Go
-            </Button>
-            <Button
-              className="w-full"
-              variant="outline"
-              type="button"
-              onClick={() => setShowAdvanced((current) => !current)}
-            >
-              Advanced Settings
-            </Button>
-          </div>
+        <CardContent className="p-4 pt-4">
+          <section className="scrollbar-thin h-[320px] overflow-y-auto pr-1">
+            {activeTab === "search" ? (
+              <div className="space-y-3">
+                <div className="relative w-full max-w-full overflow-x-clip">
+                  <div className="overflow-hidden rounded-[1.4rem] border border-primary/30 bg-background/90 shadow-sm transition-colors focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/25">
+                    <div className="flex min-w-0 items-center gap-2 px-3">
+                      <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <Input
+                        id="roles"
+                        placeholder="Job title, keywords, or company"
+                        value={roles}
+                        onChange={(event) => setRoles(event.currentTarget.value)}
+                        className="min-w-0 h-12 rounded-none border-0 bg-transparent px-0 text-[13px] shadow-none placeholder:text-[13px] focus-visible:ring-0"
+                      />
+                    </div>
+                    <div className="mx-3 h-px bg-border" />
+                    <div className="flex min-w-0 items-center gap-2 px-3">
+                      <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <Input
+                        id="location"
+                        placeholder="City, state, or remote"
+                        value={location}
+                        onChange={(event) => setLocation(event.currentTarget.value)}
+                        onFocus={() => setLocationFocused(true)}
+                        onBlur={() => window.setTimeout(() => setLocationFocused(false), 120)}
+                        onKeyDown={handleLocationKeyDown}
+                        className="min-w-0 h-11 rounded-none border-0 bg-transparent px-0 text-[13px] shadow-none placeholder:text-[13px] focus-visible:ring-0"
+                      />
+                    </div>
+                  </div>
 
-          {showAdvanced ? (
-            <section className="space-y-3 rounded-xl border bg-background p-3">
-              <h3 className="text-sm font-semibold text-[#fdf6e3]">Advanced Settings</h3>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="days">Days back</Label>
-                <Input
-                  id="days"
-                  min="1"
-                  type="number"
-                  value={days}
-                  onChange={(event) => setDays(event.currentTarget.value)}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="excludedTerms">Excluded terms</Label>
-                <Input
-                  id="excludedTerms"
-                  placeholder="senior, principal, staff"
-                  value={excludedTerms}
-                  onChange={(event) => setExcludedTerms(event.currentTarget.value)}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>ATS sites</Label>
-                <div className="relative">
-                  <Button
-                    className="w-full justify-between"
-                    variant="outline"
-                    type="button"
-                    onClick={() => setShowAtsSites((current) => !current)}
-                  >
-                    <span>{selectedSiteCount} selected</span>
-                    <span className="text-muted-foreground">Select sites</span>
-                  </Button>
-
-                  {showAtsSites ? (
-                    <div className="mt-2 grid gap-2 rounded-md border bg-card p-2 shadow-shrine">
-                      {DEFAULT_ATS_SITES.map((site) => (
-                        <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted" key={site}>
-                          <Checkbox checked={selectedSites.includes(site)} onCheckedChange={() => toggleSite(site)} />
-                          {site}
-                        </label>
-                      ))}
+                  {showLocationSuggestions ? (
+                    <div className="absolute left-0 right-0 top-full z-20 mt-2 w-full max-w-full overflow-hidden rounded-2xl border border-primary/20 bg-card shadow-shrine">
+                      <div className="scrollbar-thin grid max-h-64 gap-px overflow-y-auto bg-border/60 p-px">
+                        {locationSuggestions.map((suggestion, index) => (
+                          <button
+                            key={suggestion.value}
+                            type="button"
+                            className={`flex w-full min-w-0 items-center justify-between gap-3 bg-card px-3 py-2.5 text-left transition-colors ${
+                              index === highlightedLocationIndex ? "bg-muted" : "hover:bg-muted"
+                            }`}
+                            onMouseDown={(event) => {
+                              event.preventDefault()
+                              selectLocationSuggestion(suggestion.value)
+                            }}
+                          >
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm text-[#fdf6e3]">{suggestion.label}</span>
+                              <span className="block truncate text-xs text-muted-foreground">{suggestion.detail}</span>
+                            </span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   ) : null}
                 </div>
-              </div>
 
-              <Button className="w-full" variant="link" size="sm" type="button" onClick={() => setShowQuery((current) => !current)}>
-                {showQuery ? "Hide query" : "View query"}
-              </Button>
-
-              {showQuery ? (
-                <div className="space-y-1.5">
-                  <Label htmlFor="query">Generated query</Label>
-                  <Textarea id="query" readOnly value={query} className="font-mono text-xs leading-5" />
+                <div className="grid gap-2">
+                  <Button className="w-full" disabled={!query} onClick={search}>
+                    Go
+                  </Button>
                 </div>
-              ) : null}
-            </section>
-          ) : null}
-        </CardContent>
-      </Card>
+              </div>
+            ) : activeTab === "saved" ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-semibold leading-none tracking-tight text-[#fdf6e3]">History</h3>
+                    <p className="text-sm text-muted-foreground">{visibleJobs.length} visible catches</p>
+                  </div>
+                  <select
+                    className="h-9 w-[130px] rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    value={filter}
+                    onChange={(event) => setFilter(event.currentTarget.value as JobStatus | "all")}
+                  >
+                    <option value="all">All</option>
+                    {ACTIONABLE_STATUSES.map((status) => (
+                      <option key={status} value={status}>
+                        {STATUS_LABELS[status]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-      <Card className="border-primary/15 bg-card/95">
-        <CardHeader className="flex-row items-center justify-between space-y-0">
-          <div>
-            <CardTitle className="text-base">Saved jobs</CardTitle>
-            <CardDescription>{visibleJobs.length} visible catches</CardDescription>
-          </div>
-          <select
-            className="h-9 w-[130px] rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            value={filter}
-            onChange={(event) => setFilter(event.currentTarget.value as JobStatus | "all")}
-          >
-            <option value="all">All</option>
-            {ACTIONABLE_STATUSES.map((status) => (
-              <option key={status} value={status}>
-                {STATUS_LABELS[status]}
-              </option>
-            ))}
-          </select>
-        </CardHeader>
-        <CardContent>
-          <div className="scrollbar-thin grid max-h-[280px] gap-2 overflow-auto pr-1">
-            {visibleJobs.length === 0 ? (
-              <p className="rounded-lg border bg-background p-3 text-sm text-muted-foreground">No jobs yet.</p>
+                <div className="scrollbar-thin grid max-h-[252px] gap-2 overflow-auto pr-1">
+                  {visibleJobs.length === 0 ? (
+                    <p className="rounded-lg border bg-background p-3 text-sm text-muted-foreground">No jobs yet.</p>
+                  ) : (
+                    visibleJobs.map((job) => (
+                      <article className="rounded-xl border bg-background p-3" key={job.canonicalUrl}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 space-y-1">
+                            <strong className="line-clamp-2 text-sm leading-5">{job.title}</strong>
+                            <p className="truncate text-xs text-muted-foreground">{job.source}</p>
+                          </div>
+                          <Badge variant="outline" className={STATUS_CLASSES[job.status]}>
+                            {STATUS_LABELS[job.status]}
+                          </Badge>
+                        </div>
+                        <div className="mt-3 flex gap-2">
+                          <Button className="gap-1.5" variant="outline" size="sm" onClick={() => openUrl(job.url)}>
+                            <ExternalLink className="h-3.5 w-3.5" />
+                            Open
+                          </Button>
+                          <Button className="gap-1.5" variant="ghost" size="sm" onClick={() => removeJob(job.canonicalUrl)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Delete
+                          </Button>
+                        </div>
+                      </article>
+                    ))
+                  )}
+                </div>
+              </div>
             ) : (
-              visibleJobs.map((job) => (
-                <article className="rounded-xl border bg-background p-3" key={job.canonicalUrl}>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 space-y-1">
-                      <strong className="line-clamp-2 text-sm leading-5">{job.title}</strong>
-                      <p className="truncate text-xs text-muted-foreground">{job.source}</p>
-                    </div>
-                    <Badge variant="outline" className={STATUS_CLASSES[job.status]}>
-                      {STATUS_LABELS[job.status]}
-                    </Badge>
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <Button className="gap-1.5" variant="outline" size="sm" onClick={() => openUrl(job.url)}>
-                      <ExternalLink className="h-3.5 w-3.5" />
-                      Open
+              <section className="space-y-3 rounded-xl border bg-background p-3">
+                <h3 className="text-sm font-semibold text-[#fdf6e3]">Advanced Settings</h3>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="days">Days back</Label>
+                  <Input
+                    id="days"
+                    min="1"
+                    type="number"
+                    value={days}
+                    onChange={(event) => setDays(event.currentTarget.value)}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="excludedTerms">Excluded terms</Label>
+                  <Input
+                    id="excludedTerms"
+                    placeholder="senior, principal, staff"
+                    value={excludedTerms}
+                    onChange={(event) => setExcludedTerms(event.currentTarget.value)}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>ATS sites</Label>
+                  <div className="relative">
+                    <Button
+                      className="w-full justify-between"
+                      variant="outline"
+                      type="button"
+                      onClick={() => setShowAtsSites((current) => !current)}
+                    >
+                      <span>{selectedSiteCount} selected</span>
+                      <span className="text-muted-foreground">Select sites</span>
                     </Button>
-                    <Button className="gap-1.5" variant="ghost" size="sm" onClick={() => removeJob(job.canonicalUrl)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Delete
-                    </Button>
+
+                    {showAtsSites ? (
+                      <div className="mt-2 grid gap-2 rounded-md border bg-card p-2 shadow-shrine">
+                        {DEFAULT_ATS_SITES.map((site) => (
+                          <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted" key={site}>
+                            <Checkbox checked={selectedSites.includes(site)} onCheckedChange={() => toggleSite(site)} />
+                            {site}
+                          </label>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
-                </article>
-              ))
+                </div>
+
+                <Button className="w-full" variant="link" size="sm" type="button" onClick={() => setShowQuery((current) => !current)}>
+                  {showQuery ? "Hide query" : "View query"}
+                </Button>
+
+                {showQuery ? (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="query">Generated query</Label>
+                    <Textarea id="query" readOnly value={query} className="min-h-28 font-mono text-xs leading-5" />
+                  </div>
+                ) : null}
+              </section>
             )}
-          </div>
+          </section>
         </CardContent>
       </Card>
     </main>
