@@ -1,9 +1,16 @@
 import type { PlasmoCSConfig } from "plasmo"
 
-import { DEFAULT_ATS_SITES } from "../ats"
 import { getJobs, upsertJob } from "../storage"
-import type { JobStatus, SavedJob } from "../types"
+import type { SavedJob } from "../types"
 import { canonicalizeUrl, getHostname } from "../url"
+import {
+  CONTENT_STATUSES,
+  CONTENT_STATUS_LABELS,
+  CONTENT_STATUS_THEME,
+  createSavedJob,
+  isSupportedAtsUrl,
+  type ContentJobTarget
+} from "../content-utils"
 
 export const config: PlasmoCSConfig = {
   matches: ["https://www.google.com/search*"]
@@ -12,35 +19,13 @@ export const config: PlasmoCSConfig = {
 const TOOLBAR_ATTR = "data-ebisu-toolbar"
 const CONTAINER_ATTR = "data-ebisu-result"
 const STYLE_ID = "ebisu-google-results-style"
-const STATUSES: JobStatus[] = ["seen", "saved", "skipped", "applied"]
-const STATUS_LABELS: Record<JobStatus, string> = {
-  seen: "Seen",
-  saved: "Saved",
-  skipped: "Skipped",
-  applied: "Applied"
-}
-const STATUS_THEME: Record<JobStatus, string> = {
-  seen: "border-color:#b58900;background:rgba(181,137,0,.14);color:#b58900;",
-  saved: "border-color:#2aa198;background:rgba(42,161,152,.14);color:#2aa198;",
-  skipped: "border-color:#586e75;background:#073642;color:#93a1a1;",
-  applied: "border-color:#859900;background:rgba(133,153,0,.14);color:#859900;"
-}
 
-type ResultTarget = {
+type ResultTarget = ContentJobTarget & {
   anchor: HTMLAnchorElement
   container: HTMLElement
-  url: string
-  canonicalUrl: string
-  title: string
-  source: string
 }
 
 let scanTimer: number | null = null
-
-function isSupportedAtsUrl(url: string): boolean {
-  const hostname = getHostname(url)
-  return DEFAULT_ATS_SITES.some((site) => hostname === site || hostname.endsWith(`.${site}`))
-}
 
 function getResultContainer(anchor: HTMLAnchorElement): HTMLElement | null {
   const selectors = [".MjjYud", ".ezO2md", ".g", "[data-snc]"]
@@ -70,17 +55,6 @@ function getResultTitle(anchor: HTMLAnchorElement, container: HTMLElement): stri
   return heading?.textContent?.trim() || anchor.textContent?.trim() || anchor.href
 }
 
-function createSavedJob(target: ResultTarget, status: JobStatus): Omit<SavedJob, "firstSeenAt" | "lastSeenAt"> {
-  return {
-    id: target.canonicalUrl,
-    url: target.url,
-    canonicalUrl: target.canonicalUrl,
-    title: target.title,
-    source: target.source,
-    status
-  }
-}
-
 function ensureStyle() {
   if (document.getElementById(STYLE_ID)) {
     return
@@ -103,12 +77,12 @@ function ensureStyle() {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 8px;
-      margin-top: 10px;
-      padding: 10px 12px;
+      gap: 6px;
+      margin-top: 8px;
+      padding: 8px 10px;
       border: 1px solid #073642;
-      border-radius: 12px;
-      background: rgba(0, 43, 54, 0.94);
+      border-radius: 10px;
+      background: rgba(0, 43, 54, 0.9);
       color: #93a1a1;
       font-family: "Public Sans", ui-sans-serif, system-ui, sans-serif;
     }
@@ -118,7 +92,7 @@ function ensureStyle() {
       font-weight: 700;
       letter-spacing: 0.02em;
       color: #2aa198;
-      margin-right: 2px;
+      margin-right: 4px;
     }
 
     .ebisu-toolbar__status {
@@ -126,7 +100,7 @@ function ensureStyle() {
       align-items: center;
       border: 1px solid #586e75;
       border-radius: 999px;
-      padding: 4px 8px;
+      padding: 4px 7px;
       font-size: 11px;
       font-weight: 700;
       line-height: 1;
@@ -136,7 +110,7 @@ function ensureStyle() {
     .ebisu-toolbar__actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
+      gap: 5px;
       margin-left: auto;
     }
 
@@ -147,14 +121,20 @@ function ensureStyle() {
       color: #93a1a1;
       cursor: pointer;
       font: inherit;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       line-height: 1;
-      padding: 6px 10px;
+      padding: 6px 9px;
     }
 
     .ebisu-toolbar__button:hover {
       border-color: #2aa198;
+      color: #fdf6e3;
+    }
+
+    .ebisu-toolbar__button[data-ebisu-active="true"] {
+      border-color: #2aa198;
+      background: rgba(42, 161, 152, 0.16);
       color: #fdf6e3;
     }
   `
@@ -171,20 +151,19 @@ function applyResultState(container: HTMLElement, job: SavedJob | null) {
     return
   }
 
-  const status = job.status
-  if (status === "seen") {
+  if (job.status === "seen") {
     container.style.backgroundColor = "rgba(181, 137, 0, 0.06)"
     container.style.color = "#b58900"
     return
   }
 
-  if (status === "saved") {
+  if (job.status === "saved") {
     container.style.backgroundColor = "rgba(42, 161, 152, 0.07)"
     container.style.color = "#2aa198"
     return
   }
 
-  if (status === "applied") {
+  if (job.status === "applied") {
     container.style.backgroundColor = "rgba(133, 153, 0, 0.07)"
     container.style.color = "#859900"
     return
@@ -207,11 +186,11 @@ function upsertToolbar(target: ResultTarget, jobs: Record<string, SavedJob>) {
   brand.className = "ebisu-toolbar__brand"
   brand.textContent = "Ebisu"
   statusBadge.className = "ebisu-toolbar__status"
-  statusBadge.textContent = job ? STATUS_LABELS[job.status] : "New"
-  statusBadge.style.cssText = job ? STATUS_THEME[job.status] : "border-color:#586e75;color:#93a1a1;"
+  statusBadge.textContent = job ? CONTENT_STATUS_LABELS[job.status] : "New"
+  statusBadge.style.cssText = job ? CONTENT_STATUS_THEME[job.status] : "border-color:#586e75;color:#93a1a1;"
   actions.className = "ebisu-toolbar__actions"
 
-  for (const status of STATUSES) {
+  for (const status of CONTENT_STATUSES) {
     let button = actions.querySelector<HTMLButtonElement>(`button[data-ebisu-status="${status}"]`)
 
     if (!button) {
@@ -229,15 +208,42 @@ function upsertToolbar(target: ResultTarget, jobs: Record<string, SavedJob>) {
       actions.append(button)
     }
 
-    button.textContent = status === "saved" ? "Save" : STATUS_LABELS[status]
+    button.textContent = status === "saved" ? "Save" : CONTENT_STATUS_LABELS[status]
+    button.dataset.ebisuActive = String(job?.status === status)
   }
 
+  toolbar.replaceChildren(brand, statusBadge, actions)
+
   if (!existing) {
-    toolbar.replaceChildren(brand, statusBadge, actions)
     target.container.append(toolbar)
   }
 
   applyResultState(target.container, job)
+}
+
+function attachSeenTracking(target: ResultTarget) {
+  if (target.anchor.dataset.ebisuTrackSeen === "true") {
+    return
+  }
+
+  target.anchor.dataset.ebisuTrackSeen = "true"
+
+  const handler = () => {
+    void markSeen(target)
+  }
+
+  target.anchor.addEventListener("click", handler)
+  target.anchor.addEventListener("auxclick", handler)
+}
+
+async function markSeen(target: ResultTarget) {
+  const jobs = await getJobs()
+
+  if (jobs[target.canonicalUrl]) {
+    return
+  }
+
+  await upsertJob(createSavedJob(target, "seen"))
 }
 
 function getResultTargets(): ResultTarget[] {
@@ -288,6 +294,7 @@ async function runScan() {
   const targets = getResultTargets()
 
   for (const target of targets) {
+    attachSeenTracking(target)
     upsertToolbar(target, jobs)
   }
 }
