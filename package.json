@@ -1,8 +1,8 @@
 {
-  "name": "superjob",
-  "displayName": "Superjob",
+  "name": "ebisu",
+  "displayName": "Ebisu",
   "version": "0.0.1",
-  "description": "A local-first Chrome extension for Google job searches and saved job tracking.",
+  "description": "A local-first job search engine for focused Google searches and saved job tracking.",
   "private": true,
   "scripts": {
     "dev": "plasmo dev",
@@ -12,11 +12,22 @@
   },
   "dependencies": {
     "@plasmohq/storage": "latest",
+    "@radix-ui/react-checkbox": "latest",
+    "@radix-ui/react-label": "latest",
+    "@radix-ui/react-select": "latest",
+    "@radix-ui/react-slot": "latest",
+    "class-variance-authority": "latest",
+    "clsx": "latest",
+    "lucide-react": "latest",
     "plasmo": "latest",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "tailwind-merge": "latest"
   },
   "devDependencies": {
+    "autoprefixer": "latest",
+    "postcss": "latest",
+    "tailwindcss": "^3.4.17",
     "@types/chrome": "latest",
     "@types/node": "latest",
     "@types/react": "^18.2.0",

@@ -1,6 +1,6 @@
-# Superjob
+# Ebisu
 
-A local-first Chrome extension for generating Google job-search queries and tracking saved jobs.
+A local-first job search engine for generating focused Google queries and tracking saved jobs.
 
 ## Development
 
