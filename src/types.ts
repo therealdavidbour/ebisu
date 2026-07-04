@@ -6,6 +6,7 @@ export type SavedJob = {
   canonicalUrl: string
   title: string
   source: string
+  listingDate?: string
   status: JobStatus
   firstSeenAt: string
   lastSeenAt: string

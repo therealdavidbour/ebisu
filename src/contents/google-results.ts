@@ -55,6 +55,85 @@ function getResultTitle(anchor: HTMLAnchorElement, container: HTMLElement): stri
   return heading?.textContent?.trim() || anchor.textContent?.trim() || anchor.href
 }
 
+function formatListingDate(date: Date): string {
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  }).format(date)
+}
+
+function getRelativeListingDate(text: string): string | undefined {
+  const normalized = text.toLowerCase()
+
+  if (/\btoday\b/.test(normalized)) {
+    return formatListingDate(new Date())
+  }
+
+  if (/\byesterday\b/.test(normalized)) {
+    const date = new Date()
+    date.setDate(date.getDate() - 1)
+    return formatListingDate(date)
+  }
+
+  const relativeMatch = normalized.match(/\b(\d+)\+?\s+(minute|hour|day|week|month|year)s?\s+ago\b/)
+
+  if (!relativeMatch) {
+    return undefined
+  }
+
+  const amount = Number(relativeMatch[1])
+  const unit = relativeMatch[2]
+  const date = new Date()
+
+  if (unit === "minute") {
+    date.setMinutes(date.getMinutes() - amount)
+  } else if (unit === "hour") {
+    date.setHours(date.getHours() - amount)
+  } else if (unit === "day") {
+    date.setDate(date.getDate() - amount)
+  } else if (unit === "week") {
+    date.setDate(date.getDate() - amount * 7)
+  } else if (unit === "month") {
+    date.setMonth(date.getMonth() - amount)
+  } else if (unit === "year") {
+    date.setFullYear(date.getFullYear() - amount)
+  }
+
+  return formatListingDate(date)
+}
+
+function extractListingDate(container: HTMLElement): string | undefined {
+  const visibleText = container.innerText?.replace(/\s+/g, " ").trim()
+  const textContent = container.textContent?.replace(/\s+/g, " ").trim()
+  const text = visibleText || textContent
+
+  if (!text) {
+    return undefined
+  }
+
+  const relativeDate = getRelativeListingDate(text)
+
+  if (relativeDate) {
+    return relativeDate
+  }
+
+  const patterns = [
+    /\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}(?:,\s*\d{4})?\b/i,
+    /\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/
+  ]
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern)
+
+    if (match) {
+      return match[0]
+    }
+  }
+
+  return undefined
+}
+
 function ensureStyle() {
   if (document.getElementById(STYLE_ID)) {
     return
@@ -272,12 +351,41 @@ function attachSeenTracking(target: ResultTarget) {
 
 async function markSeen(target: ResultTarget) {
   const jobs = await getJobs()
+  const existing = jobs[target.canonicalUrl]
 
-  if (jobs[target.canonicalUrl]) {
+  if (existing) {
+    if (!existing.listingDate && target.listingDate) {
+      await upsertJob({
+        ...existing,
+        listingDate: target.listingDate
+      })
+    }
+
     return
   }
 
   await upsertJob(createSavedJob(target, "seen"))
+}
+
+async function enrichListingDates(targets: ResultTarget[], jobs: Record<string, SavedJob>) {
+  const updates = targets
+    .map((target) => {
+      const existing = jobs[target.canonicalUrl]
+
+      if (!existing || existing.listingDate || !target.listingDate) {
+        return null
+      }
+
+      return upsertJob({
+        ...existing,
+        listingDate: target.listingDate
+      })
+    })
+    .filter(Boolean)
+
+  if (updates.length > 0) {
+    await Promise.all(updates)
+  }
 }
 
 function getResultTargets(): ResultTarget[] {
@@ -314,7 +422,8 @@ function getResultTargets(): ResultTarget[] {
       url: anchor.href,
       canonicalUrl,
       title: getResultTitle(anchor, container),
-      source: getHostname(anchor.href)
+      source: getHostname(anchor.href),
+      listingDate: extractListingDate(container)
     })
   }
 
@@ -324,12 +433,15 @@ function getResultTargets(): ResultTarget[] {
 async function runScan() {
   ensureStyle()
 
-  const jobs = await getJobs()
   const targets = getResultTargets()
+  const jobs = await getJobs()
+
+  await enrichListingDates(targets, jobs)
+  const refreshedJobs = await getJobs()
 
   for (const target of targets) {
     attachSeenTracking(target)
-    upsertToolbar(target, jobs)
+    upsertToolbar(target, refreshedJobs)
   }
 }
 

@@ -7,6 +7,27 @@ const JOBS_KEY = "jobsByCanonicalUrl"
 
 type StoredJobRecord = Record<string, Omit<SavedJob, "status"> & { status: JobStatus | "skipped" }>
 
+function pad(value: number): string {
+  return String(value).padStart(2, "0")
+}
+
+function getLocalTimestamp(date = new Date()): string {
+  const year = date.getFullYear()
+  const month = pad(date.getMonth() + 1)
+  const day = pad(date.getDate())
+  const hours = pad(date.getHours())
+  const minutes = pad(date.getMinutes())
+  const seconds = pad(date.getSeconds())
+  const milliseconds = String(date.getMilliseconds()).padStart(3, "0")
+  const offsetMinutes = -date.getTimezoneOffset()
+  const offsetSign = offsetMinutes >= 0 ? "+" : "-"
+  const absoluteOffsetMinutes = Math.abs(offsetMinutes)
+  const offsetHours = pad(Math.floor(absoluteOffsetMinutes / 60))
+  const offsetRemainderMinutes = pad(absoluteOffsetMinutes % 60)
+
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}${offsetSign}${offsetHours}:${offsetRemainderMinutes}`
+}
+
 function normalizeJobs(jobs: StoredJobRecord): { jobs: JobsByUrl; changed: boolean } {
   let changed = false
   const normalized: JobsByUrl = {}
@@ -47,10 +68,11 @@ export async function getJobs(): Promise<JobsByUrl> {
 export async function upsertJob(job: Omit<SavedJob, "firstSeenAt" | "lastSeenAt">): Promise<SavedJob> {
   const jobs = await getJobs()
   const existing = jobs[job.canonicalUrl]
-  const now = new Date().toISOString()
+  const now = getLocalTimestamp()
   const savedJob: SavedJob = {
     ...existing,
     ...job,
+    listingDate: job.listingDate ?? existing?.listingDate,
     firstSeenAt: existing?.firstSeenAt ?? now,
     lastSeenAt: now
   }
@@ -72,7 +94,7 @@ export async function updateJobStatus(canonicalUrl: string, status: JobStatus): 
   const updated = {
     ...existing,
     status,
-    lastSeenAt: new Date().toISOString()
+    lastSeenAt: getLocalTimestamp()
   }
 
   jobs[canonicalUrl] = updated

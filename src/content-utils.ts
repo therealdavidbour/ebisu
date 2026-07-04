@@ -21,6 +21,7 @@ export type ContentJobTarget = {
   canonicalUrl: string
   title: string
   source: string
+  listingDate?: string
 }
 
 export function isSupportedAtsUrl(url: string): boolean {
@@ -35,6 +36,7 @@ export function createSavedJob(target: ContentJobTarget, status: JobStatus): Omi
     canonicalUrl: target.canonicalUrl,
     title: target.title,
     source: target.source,
+    ...(target.listingDate ? { listingDate: target.listingDate } : {}),
     status
   }
 }

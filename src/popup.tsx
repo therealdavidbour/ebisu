@@ -41,6 +41,20 @@ function parseCommaList(value: string): string[] {
     .filter(Boolean)
 }
 
+function formatHistoryDate(value: string): string {
+  const parsed = new Date(value)
+
+  if (Number.isNaN(parsed.getTime())) {
+    return value
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  }).format(parsed)
+}
+
 export default function Popup() {
   const [roles, setRoles] = useState("")
   const [location, setLocation] = useState("")
@@ -290,6 +304,9 @@ export default function Popup() {
                           <div className="min-w-0 space-y-1">
                             <strong className="line-clamp-2 text-sm leading-5">{job.title}</strong>
                             <p className="truncate text-xs text-muted-foreground">{job.source}</p>
+                            <p className="truncate text-xs text-muted-foreground">
+                              {job.listingDate ? `Listed: ${job.listingDate}` : `Captured: ${formatHistoryDate(job.firstSeenAt)}`}
+                            </p>
                           </div>
                           <Badge variant="outline" className={STATUS_CLASSES[job.status]}>
                             {STATUS_LABELS[job.status]}
