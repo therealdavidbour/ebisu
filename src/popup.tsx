@@ -162,7 +162,7 @@ export default function Popup() {
 
       <Card className="border-primary/15 bg-card/95">
         <CardContent className="space-y-3 p-4">
-          <div className="relative">
+          <div className="relative w-full max-w-full overflow-x-clip">
             <div className="overflow-hidden rounded-[1.4rem] border border-primary/30 bg-background/90 shadow-sm transition-colors focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/25">
               <div className="flex min-w-0 items-center gap-2 px-3">
                 <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -171,7 +171,7 @@ export default function Popup() {
                   placeholder="Job title, keywords, or company"
                   value={roles}
                   onChange={(event) => setRoles(event.currentTarget.value)}
-                  className="h-12 rounded-none border-0 bg-transparent px-0 text-[13px] shadow-none placeholder:text-[13px] focus-visible:ring-0"
+                  className="min-w-0 h-12 rounded-none border-0 bg-transparent px-0 text-[13px] shadow-none placeholder:text-[13px] focus-visible:ring-0"
                 />
               </div>
               <div className="mx-3 h-px bg-border" />
@@ -185,19 +185,19 @@ export default function Popup() {
                   onFocus={() => setLocationFocused(true)}
                   onBlur={() => window.setTimeout(() => setLocationFocused(false), 120)}
                   onKeyDown={handleLocationKeyDown}
-                  className="h-11 rounded-none border-0 bg-transparent px-0 text-[13px] shadow-none placeholder:text-[13px] focus-visible:ring-0"
+                  className="min-w-0 h-11 rounded-none border-0 bg-transparent px-0 text-[13px] shadow-none placeholder:text-[13px] focus-visible:ring-0"
                 />
               </div>
             </div>
 
             {showLocationSuggestions ? (
-              <div className="absolute inset-x-0 top-full z-20 mt-2 overflow-hidden rounded-2xl border border-primary/20 bg-card shadow-shrine">
-                <div className="grid gap-px bg-border/60 p-px">
+              <div className="absolute left-0 right-0 top-full z-20 mt-2 w-full max-w-full overflow-hidden rounded-2xl border border-primary/20 bg-card shadow-shrine">
+                <div className="scrollbar-thin grid max-h-64 gap-px overflow-y-auto bg-border/60 p-px">
                   {locationSuggestions.map((suggestion, index) => (
                     <button
                       key={suggestion.value}
                       type="button"
-                      className={`flex items-center justify-between gap-3 bg-card px-3 py-2.5 text-left transition-colors ${
+                      className={`flex w-full min-w-0 items-center justify-between gap-3 bg-card px-3 py-2.5 text-left transition-colors ${
                         index === highlightedLocationIndex ? "bg-muted" : "hover:bg-muted"
                       }`}
                       onMouseDown={(event) => {
@@ -205,7 +205,7 @@ export default function Popup() {
                         selectLocationSuggestion(suggestion.value)
                       }}
                     >
-                      <span className="min-w-0">
+                      <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm text-[#fdf6e3]">{suggestion.label}</span>
                         <span className="block truncate text-xs text-muted-foreground">{suggestion.detail}</span>
                       </span>
