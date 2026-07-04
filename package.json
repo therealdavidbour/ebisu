@@ -1,0 +1,30 @@
+{
+  "name": "superjob",
+  "displayName": "Superjob",
+  "version": "0.0.1",
+  "description": "A local-first Chrome extension for Google job searches and saved job tracking.",
+  "private": true,
+  "scripts": {
+    "dev": "plasmo dev",
+    "build": "plasmo build",
+    "package": "plasmo package",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@plasmohq/storage": "latest",
+    "plasmo": "latest",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "latest",
+    "@types/node": "latest",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.6.0"
+  },
+  "manifest": {
+    "permissions": ["tabs", "storage"],
+    "host_permissions": ["<all_urls>"]
+  }
+}
