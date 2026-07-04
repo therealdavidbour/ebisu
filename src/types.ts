@@ -13,7 +13,7 @@ export type SavedJob = {
 
 export type SearchOptions = {
   roles: string[]
-  remote: boolean
+  location?: string
   days?: number
   atsSites: string[]
   excludedTerms: string[]

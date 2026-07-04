@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { ExternalLink, Trash2 } from "lucide-react"
+import { ExternalLink, MapPin, Search, Trash2 } from "lucide-react"
 
 import { DEFAULT_ATS_SITES } from "./ats"
 import { Badge } from "./components/ui/badge"
@@ -39,7 +39,7 @@ function parseCommaList(value: string): string[] {
 
 export default function Popup() {
   const [roles, setRoles] = useState("")
-  const [remote, setRemote] = useState(true)
+  const [location, setLocation] = useState("")
   const [days, setDays] = useState("14")
   const [selectedSites, setSelectedSites] = useState(DEFAULT_ATS_SITES)
   const [excludedTerms, setExcludedTerms] = useState("")
@@ -61,12 +61,12 @@ export default function Popup() {
     () =>
       buildJobSearchQuery({
         roles: parseCommaList(roles),
-        remote,
+        location,
         days: Number(days),
         atsSites: selectedSites,
         excludedTerms: parseCommaList(excludedTerms)
       }),
-    [days, excludedTerms, remote, roles, selectedSites]
+    [days, excludedTerms, location, roles, selectedSites]
   )
 
   const selectedSiteCount = selectedSites.length
@@ -94,7 +94,7 @@ export default function Popup() {
   }
 
   return (
-    <main className="min-w-[410px] max-w-[410px] space-y-3 bg-[radial-gradient(circle_at_top_left,hsl(175_59%_40%_/_0.18),transparent_34%),linear-gradient(180deg,#002b36,#073642)] p-3">
+    <main className="min-w-[440px] max-w-[440px] space-y-3 bg-[radial-gradient(circle_at_top_left,hsl(175_59%_40%_/_0.18),transparent_34%),linear-gradient(180deg,#002b36,#073642)] p-3">
       <section className="overflow-hidden rounded-2xl border border-primary/25 bg-card shadow-shrine">
         <div className="relative p-4">
           <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-primary/20 blur-2xl" />
@@ -111,24 +111,28 @@ export default function Popup() {
 
       <Card className="border-primary/15 bg-card/95">
         <CardContent className="space-y-3 p-4">
-          <div>
-            <Input
-              id="roles"
-              placeholder="Job title, keywords, or company"
-              value={roles}
-              onChange={(event) => setRoles(event.currentTarget.value)}
-            />
-          </div>
-
-          <div className="flex items-center gap-4 text-sm">
-            <label className="flex cursor-pointer items-center gap-2">
-              <input checked={remote} name="location" type="radio" onChange={() => setRemote(true)} />
-              Remote
-            </label>
-            <label className="flex cursor-pointer items-center gap-2">
-              <input checked={!remote} name="location" type="radio" onChange={() => setRemote(false)} />
-              Any location
-            </label>
+          <div className="overflow-hidden rounded-[1.4rem] border border-primary/30 bg-background/90 shadow-sm transition-colors focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/25">
+            <div className="flex min-w-0 items-center gap-2 px-3">
+              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <Input
+                id="roles"
+                placeholder="Job title, keywords, or company"
+                value={roles}
+                onChange={(event) => setRoles(event.currentTarget.value)}
+                className="h-12 rounded-none border-0 bg-transparent px-0 text-[13px] shadow-none placeholder:text-[13px] focus-visible:ring-0"
+              />
+            </div>
+            <div className="mx-3 h-px bg-border" />
+            <div className="flex min-w-0 items-center gap-2 px-3">
+              <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <Input
+                id="location"
+                placeholder="City, state, or remote"
+                value={location}
+                onChange={(event) => setLocation(event.currentTarget.value)}
+                className="h-11 rounded-none border-0 bg-transparent px-0 text-[13px] shadow-none placeholder:text-[13px] focus-visible:ring-0"
+              />
+            </div>
           </div>
 
           <div className="grid gap-2">

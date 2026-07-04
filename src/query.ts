@@ -22,7 +22,7 @@ export function buildJobSearchQuery(options: SearchOptions): string {
     options.atsSites.map((site) => site.trim()).filter(Boolean).map((site) => `site:${site}`)
   )
   const roleQuery = groupOr(options.roles.map(quote).filter((role) => role !== '""'))
-  const remoteQuery = options.remote ? '"remote"' : ""
+  const locationQuery = options.location?.trim() ? quote(options.location) : ""
   const afterQuery = options.days && options.days > 0 ? `after:${getAfterDate(options.days)}` : ""
   const excludedQuery = options.excludedTerms
     .map((term) => term.trim())
@@ -30,7 +30,7 @@ export function buildJobSearchQuery(options: SearchOptions): string {
     .map((term) => `-${quote(term)}`)
     .join(" ")
 
-  return [atsQuery, roleQuery, remoteQuery, afterQuery, excludedQuery].filter(Boolean).join(" ")
+  return [atsQuery, roleQuery, locationQuery, afterQuery, excludedQuery].filter(Boolean).join(" ")
 }
 
 export function buildGoogleSearchUrl(query: string): string {
