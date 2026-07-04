@@ -1,6 +1,6 @@
 import type { PlasmoCSConfig } from "plasmo"
 
-import { getJobs, upsertJob } from "../storage"
+import { deleteJob, getJobs, upsertJob } from "../storage"
 import type { SavedJob } from "../types"
 import { canonicalizeUrl, getHostname } from "../url"
 import {
@@ -187,6 +187,7 @@ function stopGoogleResultEvent(event: Event) {
 
 async function handleStatusAction(event: Event, target: ResultTarget, status: (typeof CONTENT_STATUSES)[number]) {
   const button = event.currentTarget as HTMLButtonElement | null
+  const isActive = button?.dataset.ebisuActive === "true"
 
   stopGoogleResultEvent(event)
 
@@ -197,7 +198,12 @@ async function handleStatusAction(event: Event, target: ResultTarget, status: (t
   button.dataset.ebisuBusy = "true"
 
   try {
-    await upsertJob(createSavedJob(target, status))
+    if (isActive) {
+      await deleteJob(target.canonicalUrl)
+    } else {
+      await upsertJob(createSavedJob(target, status))
+    }
+
     await runScan()
   } finally {
     button.dataset.ebisuBusy = "false"

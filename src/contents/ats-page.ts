@@ -1,6 +1,6 @@
 import type { PlasmoCSConfig } from "plasmo"
 
-import { getJobs, upsertJob } from "../storage"
+import { deleteJob, getJobs, upsertJob } from "../storage"
 import type { SavedJob } from "../types"
 import { canonicalizeUrl, getHostname } from "../url"
 import {
@@ -177,7 +177,12 @@ function renderToolbar(target: ContentJobTarget, jobs: Record<string, SavedJob>)
     button.dataset.ebisuActive = String(job?.status === status)
     button.textContent = status === "saved" ? "Save" : CONTENT_STATUS_LABELS[status]
     button.addEventListener("click", async () => {
-      await upsertJob(createSavedJob(target, status))
+      if (job?.status === status) {
+        await deleteJob(target.canonicalUrl)
+      } else {
+        await upsertJob(createSavedJob(target, status))
+      }
+
       await refreshToolbar()
     })
     actions.append(button)
