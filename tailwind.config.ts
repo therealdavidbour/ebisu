@@ -42,7 +42,7 @@ const config = {
         sm: "calc(var(--radius) - 4px)"
       },
       boxShadow: {
-        shrine: "0 18px 50px -28px hsl(8 68% 33% / 0.55)"
+        shrine: "0 18px 50px -28px hsl(175 59% 40% / 0.45)"
       }
     }
   },
