@@ -2,10 +2,10 @@ import { expect, test } from "@playwright/test"
 
 test("location autocomplete reopens while the field stays focused", async ({ page }) => {
   await page.goto("/popup.html")
-
-  await page.getByRole("button", { name: "Search" }).click()
+  await expect(page.getByRole("heading", { name: "Ebisu" })).toBeVisible()
 
   const location = page.getByPlaceholder("City, state, or remote")
+  await expect(location).toBeVisible()
   await location.fill("re")
 
   const remoteSuggestion = page.getByRole("button", { name: /Remote/ })

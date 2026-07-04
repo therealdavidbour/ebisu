@@ -195,7 +195,7 @@ export default function Popup() {
         </div>
 
         <CardContent className="p-4 pt-4">
-          <section className="scrollbar-thin h-[320px] overflow-y-auto pr-1">
+          <section className="scrollbar-thin h-[320px] overflow-y-auto pr-1" data-testid="popup-tab-panel">
             {activeTab === "search" ? (
               <div className="space-y-3">
                 <div className="relative w-full max-w-full overflow-x-clip">
