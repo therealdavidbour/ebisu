@@ -1,4 +1,5 @@
 import { getAfterDate } from "./date"
+import { resolveLocationQuery } from "./locations"
 import type { SearchOptions } from "./types"
 
 function quote(value: string): string {
@@ -22,7 +23,7 @@ export function buildJobSearchQuery(options: SearchOptions): string {
     options.atsSites.map((site) => site.trim()).filter(Boolean).map((site) => `site:${site}`)
   )
   const roleQuery = groupOr(options.roles.map(quote).filter((role) => role !== '""'))
-  const locationQuery = options.location?.trim() ? quote(options.location) : ""
+  const locationQuery = options.location?.trim() ? resolveLocationQuery(options.location) : ""
   const afterQuery = options.days && options.days > 0 ? `after:${getAfterDate(options.days)}` : ""
   const excludedQuery = options.excludedTerms
     .map((term) => term.trim())

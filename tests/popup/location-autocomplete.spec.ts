@@ -8,7 +8,7 @@ test("location autocomplete reopens while the field stays focused", async ({ pag
   await expect(location).toBeVisible()
   await location.fill("re")
 
-  const remoteSuggestion = page.getByRole("button", { name: /Remote/ })
+  const remoteSuggestion = page.getByRole("button", { name: "Remote Workplace" })
   await expect(remoteSuggestion).toBeVisible()
 
   await remoteSuggestion.click()

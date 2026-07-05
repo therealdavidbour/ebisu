@@ -3,6 +3,7 @@ export type LocationSuggestion = {
   value: string
   detail: string
   searchTerms: string[]
+  queryValue?: string
 }
 
 type IndexedLocationSuggestion = LocationSuggestion & {
@@ -20,12 +21,13 @@ function normalize(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()
 }
 
-function createSuggestion(label: string, detail: string, searchTerms: string[] = []): LocationSuggestion {
+function createSuggestion(label: string, detail: string, searchTerms: string[] = [], queryValue?: string): LocationSuggestion {
   return {
     label,
     value: label,
     detail,
-    searchTerms: [label, ...searchTerms]
+    searchTerms: [label, ...searchTerms],
+    ...(queryValue ? { queryValue } : {})
   }
 }
 
@@ -39,6 +41,42 @@ function createCitySuggestion(stateCode: string, city: string, aliases: string[]
 
 const WORKPLACE_SUGGESTIONS: LocationSuggestion[] = [
   createSuggestion("Remote", "Workplace", ["work from home", "wfh", "anywhere"]),
+  createSuggestion(
+    "Remote - United States",
+    "Remote region",
+    ["remote us", "remote usa", "remote united states", "us remote", "usa remote"],
+    '"remote" ("United States" OR USA OR US) -"Canada" -"Europe" -"UK" -"India" -"EMEA" -"APAC" -"LATAM"'
+  ),
+  createSuggestion(
+    "Remote - Canada",
+    "Remote region",
+    ["remote canada", "canada remote"],
+    '"remote" (Canada OR Canadian) -"United States" -USA -US -"Europe" -"EMEA" -"APAC" -"LATAM"'
+  ),
+  createSuggestion(
+    "Remote - Europe",
+    "Remote region",
+    ["remote europe", "europe remote", "eu remote", "remote eu"],
+    '"remote" (Europe OR European OR EU OR "European Union") -"United States" -USA -US -Canada -"APAC" -"LATAM"'
+  ),
+  createSuggestion(
+    "Remote - EMEA",
+    "Remote region",
+    ["remote emea", "emea remote", "europe middle east africa"],
+    '"remote" (EMEA OR Europe OR European OR "Middle East" OR Africa) -"United States" -USA -US -Canada -"APAC" -"LATAM"'
+  ),
+  createSuggestion(
+    "Remote - APAC",
+    "Remote region",
+    ["remote apac", "apac remote", "asia pacific remote", "remote asia pacific"],
+    '"remote" (APAC OR "Asia Pacific" OR Asia OR Australia OR Singapore OR Japan OR India OR Philippines OR Indonesia OR Malaysia OR Thailand OR Vietnam) -"United States" -USA -US -Canada -"Europe" -"EMEA" -"LATAM"'
+  ),
+  createSuggestion(
+    "Remote - LATAM",
+    "Remote region",
+    ["remote latam", "latam remote", "latin america remote", "remote latin america"],
+    '"remote" (LATAM OR "Latin America" OR Mexico OR Brazil OR Argentina OR Colombia OR Chile OR Peru) -"United States" -USA -US -Canada -"Europe" -"EMEA" -"APAC"'
+  ),
   createSuggestion("Hybrid", "Workplace", ["hybrid remote"]),
   createSuggestion("On-site", "Workplace", ["onsite", "on site", "in office"])
 ]
@@ -479,6 +517,14 @@ export function getLocationSuggestions(query: string, limit = 8): LocationSugges
       label: suggestion.label,
       value: suggestion.value,
       detail: suggestion.detail,
-      searchTerms: suggestion.searchTerms
+      searchTerms: suggestion.searchTerms,
+      queryValue: suggestion.queryValue
     }))
+}
+
+export function resolveLocationQuery(value: string): string {
+  const normalizedValue = normalize(value)
+  const suggestion = LOCATION_SUGGESTIONS.find((item) => normalize(item.value) === normalizedValue)
+
+  return suggestion?.queryValue ?? `"${value.trim().replaceAll('"', "").toLowerCase()}"`
 }
