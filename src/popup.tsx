@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react"
-import { ExternalLink, MapPin, Search, Trash2 } from "lucide-react"
+import { Download, ExternalLink, MapPin, RotateCcw, Search, Trash2 } from "lucide-react"
 
 import { DEFAULT_ATS_SITES } from "./ats"
 import { Badge } from "./components/ui/badge"
@@ -11,7 +11,7 @@ import { Label } from "./components/ui/label"
 import { Textarea } from "./components/ui/textarea"
 import { getLocationSuggestions } from "./locations"
 import { buildGoogleSearchUrl, buildJobSearchQuery } from "./query"
-import { deleteJob, getJobs, upsertJob } from "./storage"
+import { clearJobs, deleteJob, getJobs, upsertJob } from "./storage"
 import { openUrl } from "./tabs"
 import type { JobsByUrl, JobStatus, SavedJob } from "./types"
 
@@ -92,6 +92,7 @@ export default function Popup() {
   const [activeTab, setActiveTab] = useState<ControlTab>("search")
   const [showAtsSites, setShowAtsSites] = useState(false)
   const [showQuery, setShowQuery] = useState(false)
+  const [showClearHistoryConfirm, setShowClearHistoryConfirm] = useState(false)
   const [jobs, setJobs] = useState<JobsByUrl>({})
   const [filter, setFilter] = useState<JobStatus | "all">("all")
 
@@ -115,10 +116,11 @@ export default function Popup() {
     [days, excludedTerms, location, roles, selectedSites]
   )
 
+  const allJobs = Object.values(jobs).sort((a, b) => b.lastSeenAt.localeCompare(a.lastSeenAt))
   const selectedSiteCount = selectedSites.length
+  const hasHistory = allJobs.length > 0
   const locationSuggestions = useMemo(() => getLocationSuggestions(location), [location])
   const showLocationSuggestions = locationFocused && locationSuggestions.length > 0
-  const allJobs = Object.values(jobs).sort((a, b) => b.lastSeenAt.localeCompare(a.lastSeenAt))
   const visibleJobs = allJobs
     .filter((job) => filter === "all" || job.status === filter)
 
@@ -132,6 +134,12 @@ export default function Popup() {
 
   async function removeJob(canonicalUrl: string) {
     await deleteJob(canonicalUrl)
+    await refresh()
+  }
+
+  async function clearHistory() {
+    await clearJobs()
+    setShowClearHistoryConfirm(false)
     await refresh()
   }
 
@@ -253,7 +261,7 @@ export default function Popup() {
           })}
         </div>
 
-        <CardContent className="p-4 pt-4">
+        <CardContent className="relative p-4 pt-4">
           <section className="scrollbar-thin h-[320px] overflow-y-auto pr-1" data-testid="popup-tab-panel">
             {activeTab === "search" ? (
               <div className="space-y-3">
@@ -323,11 +331,28 @@ export default function Popup() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h3 className="text-base font-semibold leading-none tracking-tight text-[#fdf6e3]">History</h3>
-                    <p className="text-sm text-muted-foreground">{visibleJobs.length} visible catches</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" type="button" disabled={allJobs.length === 0} onClick={exportHistoryCsv}>
-                      Export CSV
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      type="button"
+                      onClick={() => setShowClearHistoryConfirm(true)}
+                      aria-label="Clear Ebisu history"
+                      title="Clear Ebisu history"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      type="button"
+                      disabled={allJobs.length === 0}
+                      onClick={exportHistoryCsv}
+                      aria-label="Export history as CSV"
+                      title="Export history as CSV"
+                    >
+                      <Download className="h-4 w-4" />
                     </Button>
                     <select
                       className="h-9 w-[130px] rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -440,7 +465,36 @@ export default function Popup() {
                 ) : null}
               </section>
             )}
-          </section>
+              </section>
+          {showClearHistoryConfirm ? (
+            <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/80 px-4 backdrop-blur-sm">
+              <div className="w-full max-w-[320px] rounded-2xl border border-primary/20 bg-card p-4 shadow-shrine" role="dialog" aria-modal="true" aria-labelledby="clear-history-title">
+                <h4 id="clear-history-title" className="text-sm font-semibold text-[#fdf6e3]">
+                  Clear Ebisu history?
+                </h4>
+                <p className="mt-2 text-sm leading-5 text-muted-foreground">
+                  {hasHistory
+                    ? "This will remove all saved jobs from Ebisu history. It will not affect your Chrome browsing history."
+                    : "Ebisu history is already empty. Your Chrome browsing history is not affected."}
+                </p>
+                <div className="mt-4 flex justify-end gap-2">
+                  <Button variant="outline" type="button" onClick={() => setShowClearHistoryConfirm(false)}>
+                    {hasHistory ? "Cancel" : "Close"}
+                  </Button>
+                  {hasHistory ? (
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        void clearHistory()
+                      }}
+                    >
+                      Clear Ebisu History
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
     </main>

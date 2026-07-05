@@ -108,3 +108,7 @@ export async function deleteJob(canonicalUrl: string): Promise<void> {
   delete jobs[canonicalUrl]
   await storage.set(JOBS_KEY, jobs)
 }
+
+export async function clearJobs(): Promise<void> {
+  await storage.set(JOBS_KEY, {})
+}

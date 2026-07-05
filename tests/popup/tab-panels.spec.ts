@@ -41,3 +41,18 @@ test("popup tab panel height stays fixed across tabs", async ({ page }) => {
   expect(Math.round(historyBox!.height)).toBe(Math.round(initialBox!.height))
   expect(Math.round(advancedBox!.height)).toBe(Math.round(initialBox!.height))
 })
+
+test("clear history uses an in-popup Ebisu confirmation dialog", async ({ page }) => {
+  await page.goto("/popup.html")
+  await expect(page.getByRole("heading", { name: "Ebisu" })).toBeVisible()
+  await page.getByRole("button", { name: "History" }).click()
+
+  const clearButton = page.getByRole("button", { name: "Clear Ebisu history" })
+  await clearButton.click()
+
+  await expect(page.getByRole("heading", { name: "Clear Ebisu history?" })).toBeVisible()
+  await expect(page.getByText("Your Chrome browsing history is not affected.")).toBeVisible()
+
+  await page.getByRole("button", { name: "Close" }).click()
+  await expect(page.getByRole("heading", { name: "Clear Ebisu history?" })).toHaveCount(0)
+})
