@@ -11,7 +11,7 @@ import { Label } from "./components/ui/label"
 import { Textarea } from "./components/ui/textarea"
 import { getLocationSuggestions } from "./locations"
 import { buildGoogleSearchUrl, buildJobSearchQuery } from "./query"
-import { clearJobs, deleteJob, getJobs, upsertJob } from "./storage"
+import { clearJobs, deleteJob, getJobs, updateJobStatus, upsertJob } from "./storage"
 import { openUrl } from "./tabs"
 import type { JobsByUrl, JobStatus, SavedJob } from "./types"
 
@@ -81,6 +81,11 @@ function buildHistoryCsv(jobs: SavedJob[]): string {
   return rows.map((row) => row.map((value) => escapeCsvValue(value)).join(",")).join("\n")
 }
 
+function getNextStatus(status: JobStatus): JobStatus {
+  const currentIndex = ACTIONABLE_STATUSES.indexOf(status)
+  return ACTIONABLE_STATUSES[(currentIndex + 1) % ACTIONABLE_STATUSES.length]
+}
+
 export default function Popup() {
   const [roles, setRoles] = useState("")
   const [location, setLocation] = useState("")
@@ -116,7 +121,15 @@ export default function Popup() {
     [days, excludedTerms, location, roles, selectedSites]
   )
 
-  const allJobs = Object.values(jobs).sort((a, b) => b.lastSeenAt.localeCompare(a.lastSeenAt))
+  const allJobs = Object.values(jobs).sort((a, b) => {
+    const firstSeenComparison = b.firstSeenAt.localeCompare(a.firstSeenAt)
+
+    if (firstSeenComparison !== 0) {
+      return firstSeenComparison
+    }
+
+    return b.lastSeenAt.localeCompare(a.lastSeenAt)
+  })
   const selectedSiteCount = selectedSites.length
   const hasHistory = allJobs.length > 0
   const locationSuggestions = useMemo(() => getLocationSuggestions(location), [location])
@@ -135,6 +148,15 @@ export default function Popup() {
   async function removeJob(canonicalUrl: string) {
     await deleteJob(canonicalUrl)
     await refresh()
+  }
+
+  async function setHistoryStatus(canonicalUrl: string, status: JobStatus) {
+    await updateJobStatus(canonicalUrl, status)
+    await refresh()
+  }
+
+  async function cycleHistoryStatus(job: SavedJob) {
+    await setHistoryStatus(job.canonicalUrl, getNextStatus(job.status))
   }
 
   async function clearHistory() {
@@ -220,13 +242,13 @@ export default function Popup() {
   }, [location])
 
   return (
-    <main className="min-w-[400px] max-w-[400px] space-y-3 bg-[radial-gradient(circle_at_top_left,hsl(175_59%_40%_/_0.18),transparent_34%),linear-gradient(180deg,#002b36,#073642)] p-3">
-      <section className="overflow-hidden rounded-2xl border border-primary/25 bg-card shadow-shrine">
+    <main className="min-w-[400px] max-w-[400px] space-y-3 bg-[linear-gradient(180deg,#111c24,#15222b)] p-3 text-[#b8bcc0]">
+      <section className="overflow-hidden rounded-md border border-[#2e6070] bg-card shadow-[0_10px_30px_-18px_rgba(0,0,0,0.7)]">
         <div className="relative p-4">
-          <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-primary/20 blur-2xl" />
+          <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-[#2e6070]/20 blur-2xl" />
           <div className="relative">
             <div className="max-w-[320px]">
-              <h1 className="text-2xl font-black tracking-tight text-[#fdf6e3]">Ebisu</h1>
+              <h1 className="text-2xl font-black tracking-tight text-[#ff7b57]">Ebisu</h1>
               <p className="mt-1 text-sm leading-5 text-muted-foreground">
                 Find jobs at the ATS source before they spread across job aggregators.
               </p>
@@ -235,8 +257,8 @@ export default function Popup() {
         </div>
       </section>
 
-      <Card className="border-primary/15 bg-card/95">
-        <div className="flex border-b border-primary/15 px-2 pt-2">
+      <Card className="overflow-hidden rounded-md border border-[#2e6070] bg-card/95 shadow-[0_10px_30px_-18px_rgba(0,0,0,0.7)]">
+        <div className="mx-2 mt-2 flex items-end border-b border-[#2e6070]">
           {CONTROL_TABS.map((tab) => {
             const isActive = activeTab === tab
 
@@ -244,10 +266,10 @@ export default function Popup() {
               <button
                 key={tab}
                 type="button"
-                className={`relative rounded-t-xl px-4 py-2 text-sm font-medium transition-colors ${
+                className={`relative -mb-px border border-b-0 px-4 py-2 text-sm font-medium transition-colors ${
                   isActive
-                    ? "bg-background text-[#fdf6e3] shadow-sm"
-                    : "text-muted-foreground hover:bg-background/60 hover:text-[#fdf6e3]"
+                    ? "border-[#2e6070] bg-[#1e4f5d] text-[#cf7a64]"
+                    : "border-transparent bg-transparent text-[#2f6b78] hover:border-[#234a56] hover:bg-[#17242c] hover:text-[#7f8f95]"
                 }`}
                 onClick={() => {
                   setActiveTab(tab)
@@ -255,7 +277,7 @@ export default function Popup() {
                 }}
               >
                 {tab === "search" ? "Search" : tab === "saved" ? "History" : "Advanced Settings"}
-                {isActive ? <span className="absolute inset-x-0 bottom-0 h-px bg-background" /> : null}
+                {isActive ? <span className="absolute inset-x-0 bottom-[-1px] h-px bg-[#1e4f5d]" /> : null}
               </button>
             )
           })}
@@ -383,9 +405,17 @@ export default function Popup() {
                               {job.listingDate ? `Listed: ${job.listingDate}` : `Captured: ${formatHistoryDate(job.firstSeenAt)}`}
                             </p>
                           </div>
-                          <Badge variant="outline" className={STATUS_CLASSES[job.status]}>
+                          <button
+                            type="button"
+                            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors ${STATUS_CLASSES[job.status]}`}
+                            onClick={() => {
+                              void cycleHistoryStatus(job)
+                            }}
+                            aria-label={`Change status from ${STATUS_LABELS[job.status]}`}
+                            title={`Click to change status from ${STATUS_LABELS[job.status]}`}
+                          >
                             {STATUS_LABELS[job.status]}
-                          </Badge>
+                          </button>
                         </div>
                         <div className="mt-3 flex gap-2">
                           <Button className="gap-1.5" variant="outline" size="sm" onClick={() => openUrl(job.url)}>
