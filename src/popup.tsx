@@ -55,6 +55,32 @@ function formatHistoryDate(value: string): string {
   }).format(parsed)
 }
 
+function escapeCsvValue(value: string): string {
+  if (/[",\n]/.test(value)) {
+    return `"${value.replaceAll('"', '""')}"`
+  }
+
+  return value
+}
+
+function buildHistoryCsv(jobs: SavedJob[]): string {
+  const rows = [
+    ["title", "source", "status", "listingDate", "capturedAt", "lastUpdatedAt", "url", "canonicalUrl"],
+    ...jobs.map((job) => [
+      job.title,
+      job.source,
+      job.status,
+      job.listingDate ?? "",
+      job.firstSeenAt,
+      job.lastSeenAt,
+      job.url,
+      job.canonicalUrl
+    ])
+  ]
+
+  return rows.map((row) => row.map((value) => escapeCsvValue(value)).join(",")).join("\n")
+}
+
 export default function Popup() {
   const [roles, setRoles] = useState("")
   const [location, setLocation] = useState("")
@@ -92,9 +118,9 @@ export default function Popup() {
   const selectedSiteCount = selectedSites.length
   const locationSuggestions = useMemo(() => getLocationSuggestions(location), [location])
   const showLocationSuggestions = locationFocused && locationSuggestions.length > 0
-  const visibleJobs = Object.values(jobs)
+  const allJobs = Object.values(jobs).sort((a, b) => b.lastSeenAt.localeCompare(a.lastSeenAt))
+  const visibleJobs = allJobs
     .filter((job) => filter === "all" || job.status === filter)
-    .sort((a, b) => b.lastSeenAt.localeCompare(a.lastSeenAt))
 
   async function search() {
     if (!query) {
@@ -107,6 +133,25 @@ export default function Popup() {
   async function removeJob(canonicalUrl: string) {
     await deleteJob(canonicalUrl)
     await refresh()
+  }
+
+  function exportHistoryCsv() {
+    if (allJobs.length === 0) {
+      return
+    }
+
+    const csv = buildHistoryCsv(allJobs)
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" })
+    const downloadUrl = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    const date = new Date().toISOString().slice(0, 10)
+
+    link.href = downloadUrl
+    link.download = `ebisu-history-${date}.csv`
+    document.body.append(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(downloadUrl)
   }
 
   function toggleSite(site: string) {
@@ -280,18 +325,23 @@ export default function Popup() {
                     <h3 className="text-base font-semibold leading-none tracking-tight text-[#fdf6e3]">History</h3>
                     <p className="text-sm text-muted-foreground">{visibleJobs.length} visible catches</p>
                   </div>
-                  <select
-                    className="h-9 w-[130px] rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    value={filter}
-                    onChange={(event) => setFilter(event.currentTarget.value as JobStatus | "all")}
-                  >
-                    <option value="all">All</option>
-                    {ACTIONABLE_STATUSES.map((status) => (
-                      <option key={status} value={status}>
-                        {STATUS_LABELS[status]}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" type="button" disabled={allJobs.length === 0} onClick={exportHistoryCsv}>
+                      Export CSV
+                    </Button>
+                    <select
+                      className="h-9 w-[130px] rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      value={filter}
+                      onChange={(event) => setFilter(event.currentTarget.value as JobStatus | "all")}
+                    >
+                      <option value="all">All</option>
+                      {ACTIONABLE_STATUSES.map((status) => (
+                        <option key={status} value={status}>
+                          {STATUS_LABELS[status]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="scrollbar-thin grid max-h-[252px] gap-2 overflow-auto pr-1">
