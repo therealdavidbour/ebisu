@@ -13,7 +13,7 @@ test("popup tab switching shows the correct panel content", async ({ page }) => 
 
   await page.getByRole("button", { name: "Advanced Settings" }).click()
   await expect(page.getByRole("heading", { name: "Advanced Settings" })).toBeVisible()
-  await expect(page.getByLabel("Days back")).toBeVisible()
+  await expect(page.getByLabel("Days back")).toHaveValue("1")
   await expect(page.getByLabel("Excluded terms")).toBeVisible()
 
   await page.getByRole("button", { name: "Search" }).click()

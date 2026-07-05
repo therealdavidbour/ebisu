@@ -91,7 +91,7 @@ export default function Popup() {
   const [location, setLocation] = useState("")
   const [locationFocused, setLocationFocused] = useState(false)
   const [highlightedLocationIndex, setHighlightedLocationIndex] = useState(0)
-  const [days, setDays] = useState("14")
+  const [days, setDays] = useState("1")
   const [selectedSites, setSelectedSites] = useState(DEFAULT_ATS_SITES)
   const [excludedTerms, setExcludedTerms] = useState("")
   const [activeTab, setActiveTab] = useState<ControlTab>("search")
