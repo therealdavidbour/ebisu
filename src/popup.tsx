@@ -175,7 +175,7 @@ export default function Popup() {
             <div className="max-w-[320px]">
               <h1 className="text-2xl font-black tracking-tight text-[#fdf6e3]">Ebisu</h1>
               <p className="mt-1 text-sm leading-5 text-muted-foreground">
-                Uncovering jobs before they make it to LinkedIn, Dice, Indeed, and other aggregate search engines.
+                Find jobs at the ATS source before they spread across job aggregators.
               </p>
             </div>
           </div>

@@ -2,7 +2,7 @@
   "name": "ebisu",
   "displayName": "Ebisu",
   "version": "0.0.1",
-  "description": "A local-first job search engine for focused Google searches and saved job tracking.",
+  "description": "Ebisu surfaces openings directly from Greenhouse, Lever, Ashby, and other ATS platforms so you can discover fresh roles earlier and stay organized as you search.",
   "private": true,
   "scripts": {
     "dev": "plasmo dev",

@@ -1,6 +1,8 @@
 # Ebisu
 
-A local-first job search engine for generating focused Google queries and tracking saved jobs.
+## See the job before everyone else does.
+
+Ebisu surfaces openings directly from Greenhouse, Lever, Ashby, and other ATS platforms, helping you discover fresh roles earlier than the big job boards and stay organized as you search.
 
 ## Development
 
