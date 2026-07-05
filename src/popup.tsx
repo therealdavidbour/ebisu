@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react"
-import { Download, ExternalLink, MapPin, RotateCcw, Search, Trash2 } from "lucide-react"
+import { Download, ExternalLink, MapPin, Search, Trash2 } from "lucide-react"
 
 import { DEFAULT_ATS_SITES } from "./ats"
 import { Badge } from "./components/ui/badge"
@@ -341,7 +341,7 @@ export default function Popup() {
                       aria-label="Clear Ebisu history"
                       title="Clear Ebisu history"
                     >
-                      <RotateCcw className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
@@ -474,8 +474,8 @@ export default function Popup() {
                 </h4>
                 <p className="mt-2 text-sm leading-5 text-muted-foreground">
                   {hasHistory
-                    ? "This will remove all saved jobs from Ebisu history. It will not affect your Chrome browsing history."
-                    : "Ebisu history is already empty. Your Chrome browsing history is not affected."}
+                    ? "This will remove all saved jobs from Ebisu history."
+                    : "Ebisu history is already empty."}
                 </p>
                 <div className="mt-4 flex justify-end gap-2">
                   <Button variant="outline" type="button" onClick={() => setShowClearHistoryConfirm(false)}>

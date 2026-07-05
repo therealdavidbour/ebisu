@@ -51,7 +51,7 @@ test("clear history uses an in-popup Ebisu confirmation dialog", async ({ page }
   await clearButton.click()
 
   await expect(page.getByRole("heading", { name: "Clear Ebisu history?" })).toBeVisible()
-  await expect(page.getByText("Your Chrome browsing history is not affected.")).toBeVisible()
+  await expect(page.getByText("Ebisu history is already empty.")).toBeVisible()
 
   await page.getByRole("button", { name: "Close" }).click()
   await expect(page.getByRole("heading", { name: "Clear Ebisu history?" })).toHaveCount(0)
