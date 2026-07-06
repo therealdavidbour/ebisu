@@ -43,7 +43,14 @@
       "storage"
     ],
     "host_permissions": [
-      "<all_urls>"
+      "https://www.google.com/*",
+      "https://greenhouse.io/*",
+      "https://*.greenhouse.io/*",
+      "https://jobs.lever.co/*",
+      "https://ashbyhq.com/*",
+      "https://*.ashbyhq.com/*",
+      "https://myworkdayjobs.com/*",
+      "https://*.myworkdayjobs.com/*"
     ]
   }
 }

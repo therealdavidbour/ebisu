@@ -13,7 +13,15 @@ import {
 } from "../content-utils"
 
 export const config: PlasmoCSConfig = {
-  matches: ["<all_urls>"]
+  matches: [
+    "https://greenhouse.io/*",
+    "https://*.greenhouse.io/*",
+    "https://jobs.lever.co/*",
+    "https://ashbyhq.com/*",
+    "https://*.ashbyhq.com/*",
+    "https://myworkdayjobs.com/*",
+    "https://*.myworkdayjobs.com/*"
+  ]
 }
 
 const ROOT_ID = "ebisu-ats-toolbar"
