@@ -3,9 +3,11 @@ import { Storage } from "@plasmohq/storage"
 import type { JobsByUrl, JobStatus, SavedJob } from "./types"
 
 const storage = new Storage({ area: "local" })
-const JOBS_KEY = "jobsByCanonicalUrl"
+const LEGACY_JOBS_KEY = "jobsByCanonicalUrl"
+const JOB_KEY_PREFIX = "job:"
 
 type StoredJobRecord = Record<string, Omit<SavedJob, "status"> & { status: JobStatus | "skipped" }>
+type StoredJob = Omit<SavedJob, "status"> & { status: JobStatus | "skipped" }
 
 function pad(value: number): string {
   return String(value).padStart(2, "0")
@@ -54,20 +56,105 @@ function normalizeJobs(jobs: StoredJobRecord): { jobs: JobsByUrl; changed: boole
   }
 }
 
-export async function getJobs(): Promise<JobsByUrl> {
-  const storedJobs = (((await storage.get<StoredJobRecord>(JOBS_KEY)) ?? {}) as StoredJobRecord)
-  const { jobs, changed } = normalizeJobs(storedJobs)
+function getJobKey(canonicalUrl: string): string {
+  return `${JOB_KEY_PREFIX}${canonicalUrl}`
+}
+
+function isJobKey(key: string): boolean {
+  return key.startsWith(JOB_KEY_PREFIX)
+}
+
+function parseStoredJob(value: unknown): StoredJob | undefined {
+  if (!value) {
+    return undefined
+  }
+
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value) as StoredJob
+    } catch {
+      return undefined
+    }
+  }
+
+  return value as StoredJob
+}
+
+function normalizeJob(job: StoredJob): { job: SavedJob; changed: boolean } {
+  return {
+    job: {
+      ...job,
+      status: job.status === "skipped" ? "seen" : job.status
+    },
+    changed: job.status === "skipped"
+  }
+}
+
+async function migrateLegacyJobs(): Promise<void> {
+  const legacyJobs = await storage.get<StoredJobRecord>(LEGACY_JOBS_KEY)
+
+  if (!legacyJobs) {
+    return
+  }
+
+  const { jobs } = normalizeJobs(legacyJobs)
+  const entries = Object.fromEntries(Object.values(jobs).map((job) => [getJobKey(job.canonicalUrl), job]))
+
+  if (Object.keys(entries).length > 0) {
+    await storage.setMany(entries)
+  }
+
+  await storage.remove(LEGACY_JOBS_KEY)
+}
+
+async function getStoredJob(canonicalUrl: string): Promise<SavedJob | undefined> {
+  const storedJob = await storage.get<StoredJob>(getJobKey(canonicalUrl))
+
+  if (!storedJob) {
+    return undefined
+  }
+
+  const { job, changed } = normalizeJob(storedJob)
 
   if (changed) {
-    await storage.set(JOBS_KEY, jobs)
+    await storage.set(getJobKey(canonicalUrl), job)
+  }
+
+  return job
+}
+
+export async function getJobs(): Promise<JobsByUrl> {
+  await migrateLegacyJobs()
+
+  const storedItems = await storage.getAll()
+  const jobs: JobsByUrl = {}
+
+  for (const [key, value] of Object.entries(storedItems)) {
+    if (!isJobKey(key)) {
+      continue
+    }
+
+    const storedJob = parseStoredJob(value)
+
+    if (!storedJob) {
+      continue
+    }
+
+    const { job, changed } = normalizeJob(storedJob)
+    jobs[job.canonicalUrl] = job
+
+    if (changed) {
+      await storage.set(key, job)
+    }
   }
 
   return jobs
 }
 
 export async function upsertJob(job: Omit<SavedJob, "firstSeenAt" | "lastSeenAt">): Promise<SavedJob> {
-  const jobs = await getJobs()
-  const existing = jobs[job.canonicalUrl]
+  await migrateLegacyJobs()
+
+  const existing = await getStoredJob(job.canonicalUrl)
   const now = getLocalTimestamp()
   const savedJob: SavedJob = {
     ...existing,
@@ -77,15 +164,15 @@ export async function upsertJob(job: Omit<SavedJob, "firstSeenAt" | "lastSeenAt"
     lastSeenAt: now
   }
 
-  jobs[job.canonicalUrl] = savedJob
-  await storage.set(JOBS_KEY, jobs)
+  await storage.set(getJobKey(job.canonicalUrl), savedJob)
 
   return savedJob
 }
 
 export async function updateJobStatus(canonicalUrl: string, status: JobStatus): Promise<SavedJob | null> {
-  const jobs = await getJobs()
-  const existing = jobs[canonicalUrl]
+  await migrateLegacyJobs()
+
+  const existing = await getStoredJob(canonicalUrl)
 
   if (!existing) {
     return null
@@ -97,18 +184,23 @@ export async function updateJobStatus(canonicalUrl: string, status: JobStatus): 
     lastSeenAt: getLocalTimestamp()
   }
 
-  jobs[canonicalUrl] = updated
-  await storage.set(JOBS_KEY, jobs)
+  await storage.set(getJobKey(canonicalUrl), updated)
 
   return updated
 }
 
 export async function deleteJob(canonicalUrl: string): Promise<void> {
-  const jobs = await getJobs()
-  delete jobs[canonicalUrl]
-  await storage.set(JOBS_KEY, jobs)
+  await migrateLegacyJobs()
+  await storage.remove(getJobKey(canonicalUrl))
 }
 
 export async function clearJobs(): Promise<void> {
-  await storage.set(JOBS_KEY, {})
+  const storedItems = await storage.getAll()
+  const jobKeys = Object.keys(storedItems).filter(isJobKey)
+
+  if (jobKeys.length > 0) {
+    await storage.removeMany(jobKeys)
+  }
+
+  await storage.remove(LEGACY_JOBS_KEY)
 }
