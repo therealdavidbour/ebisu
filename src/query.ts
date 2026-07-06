@@ -2,7 +2,7 @@ import { getAfterDate } from "./date"
 import { resolveLocationQuery } from "./locations"
 import type { SearchOptions } from "./types"
 
-const EXCLUDED_AGGREGATOR_SITES = [
+export const DEFAULT_AGGREGATOR_EXCLUSION_SITES = [
   "indeed.com",
   "linkedin.com",
   "dice.com",
@@ -34,7 +34,9 @@ export function buildJobSearchQuery(options: SearchOptions): string {
   const roleQuery = groupOr(options.roles.map(quote).filter((role) => role !== '""'))
   const locationQuery = options.location?.trim() ? resolveLocationQuery(options.location) : ""
   const afterQuery = options.days && options.days > 0 ? `after:${getAfterDate(options.days)}` : ""
-  const aggregatorExclusionQuery = EXCLUDED_AGGREGATOR_SITES.map((site) => `-site:${site}`).join(" ")
+  const aggregatorExclusionQuery = options.excludeAggregatorSites === false
+    ? ""
+    : DEFAULT_AGGREGATOR_EXCLUSION_SITES.map((site) => `-site:${site}`).join(" ")
   const excludedQuery = options.excludedTerms
     .map((term) => term.trim())
     .filter(Boolean)

@@ -10,8 +10,8 @@ import { Input } from "./components/ui/input"
 import { Label } from "./components/ui/label"
 import { Textarea } from "./components/ui/textarea"
 import { getLocationSuggestions } from "./locations"
-import { buildGoogleSearchUrl, buildJobSearchQuery } from "./query"
-import { clearJobs, deleteJob, getJobs, updateJobStatus, upsertJob } from "./storage"
+import { DEFAULT_AGGREGATOR_EXCLUSION_SITES, buildGoogleSearchUrl, buildJobSearchQuery } from "./query"
+import { clearJobs, deleteJob, getJobs, updateJobStatus } from "./storage"
 import { openUrl } from "./tabs"
 import type { JobsByUrl, JobStatus, SavedJob } from "./types"
 
@@ -93,6 +93,7 @@ export default function Popup() {
   const [highlightedLocationIndex, setHighlightedLocationIndex] = useState(0)
   const [days, setDays] = useState("1")
   const [selectedSites, setSelectedSites] = useState(DEFAULT_ATS_SITES)
+  const [excludeAggregatorSites, setExcludeAggregatorSites] = useState(true)
   const [excludedTerms, setExcludedTerms] = useState("")
   const [activeTab, setActiveTab] = useState<ControlTab>("search")
   const [showAtsSites, setShowAtsSites] = useState(false)
@@ -116,9 +117,10 @@ export default function Popup() {
         location,
         days: Number(days),
         atsSites: selectedSites,
+        excludeAggregatorSites,
         excludedTerms: parseCommaList(excludedTerms)
       }),
-    [days, excludedTerms, location, roles, selectedSites]
+    [days, excludeAggregatorSites, excludedTerms, location, roles, selectedSites]
   )
 
   const allJobs = Object.values(jobs).sort((a, b) => {
@@ -455,6 +457,22 @@ export default function Popup() {
                     value={excludedTerms}
                     onChange={(event) => setExcludedTerms(event.currentTarget.value)}
                   />
+                </div>
+
+                <div className="space-y-2 rounded-lg border border-border/80 bg-card/40 p-2.5">
+                  <label className="flex cursor-pointer items-start gap-2 text-sm leading-5">
+                    <Checkbox
+                      id="excludeAggregatorSites"
+                      checked={excludeAggregatorSites}
+                      onCheckedChange={(checked) => setExcludeAggregatorSites(checked === true)}
+                    />
+                    <span>
+                      <span className="block font-medium text-[#fdf6e3]">Exclude job aggregators</span>
+                      <span className="block text-xs text-muted-foreground">
+                        Adds -site filters for {DEFAULT_AGGREGATOR_EXCLUSION_SITES.join(", ")}.
+                      </span>
+                    </span>
+                  </label>
                 </div>
 
                 <div className="space-y-1.5">

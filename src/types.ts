@@ -17,6 +17,7 @@ export type SearchOptions = {
   location?: string
   days?: number
   atsSites: string[]
+  excludeAggregatorSites?: boolean
   excludedTerms: string[]
 }
 

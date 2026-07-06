@@ -15,9 +15,24 @@ test("popup tab switching shows the correct panel content", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "Advanced Settings" })).toBeVisible()
   await expect(page.getByLabel("Days back")).toHaveValue("1")
   await expect(page.getByLabel("Excluded terms")).toBeVisible()
+  await expect(page.getByText("Exclude job aggregators")).toBeVisible()
 
   await page.getByRole("button", { name: "Search" }).click()
   await expect(page.getByPlaceholder("City, state, or remote")).toBeVisible()
+})
+
+test("aggregator exclusions are visible and configurable", async ({ page }) => {
+  await page.goto("/popup.html")
+  await expect(page.getByRole("heading", { name: "Ebisu" })).toBeVisible()
+
+  await page.getByRole("button", { name: "Advanced Settings" }).click()
+  await page.getByRole("button", { name: "View query" }).click()
+
+  const query = page.getByLabel("Generated query")
+  await expect(query).toHaveValue(/-site:indeed\.com/)
+
+  await page.getByText("Exclude job aggregators").click()
+  await expect(query).not.toHaveValue(/-site:indeed\.com/)
 })
 
 test("popup tab panel height stays fixed across tabs", async ({ page }) => {

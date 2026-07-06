@@ -16,7 +16,6 @@
     "@plasmohq/storage": "latest",
     "@radix-ui/react-checkbox": "latest",
     "@radix-ui/react-label": "latest",
-    "@radix-ui/react-select": "latest",
     "@radix-ui/react-slot": "latest",
     "class-variance-authority": "latest",
     "clsx": "latest",
