@@ -195,6 +195,8 @@
       .demo-dot { width: 9px; height: 9px; border-radius: 999px; background: #2e6070; }
       .demo-body { display: grid; gap: 14px; padding: clamp(16px, 2.6vw, 22px); }
       .demo-label { color: var(--dim); font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+      .demo-image { display: block; width: min(100%, 420px); height: auto; margin-top: 10px; border-radius: 16px; }
+      .demo-caption { color: var(--muted); font-size: 14px; line-height: 1.5; }
 
       .demo-inputs { display: grid; gap: 10px; }
       .demo-input { border: 1px solid rgba(46, 96, 112, 0.8); border-radius: 16px; background: #0f1b22; padding: 12px 14px; }
@@ -299,6 +301,11 @@
           <div class="demo-card" aria-label="Example Ebisu quickstart flow">
             <div class="demo-bar"><span class="demo-dot"></span><span class="demo-dot"></span><span class="demo-dot"></span></div>
             <div class="demo-body">
+              <div>
+                <div class="demo-label">Pin in Chrome</div>
+                <img class="demo-image" src="assets/pin-ebisu-browser.svg" alt="Chrome toolbar illustration with the Extensions menu open and Ebisu pinned" />
+                <p class="demo-caption">Open Chrome's Extensions menu, then click the pin icon next to Ebisu so the popup stays in your toolbar.</p>
+              </div>
               <div>
                 <div class="demo-label">Popup search</div>
                 <div class="demo-inputs">
