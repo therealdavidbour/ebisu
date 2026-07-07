@@ -14,7 +14,10 @@
         --muted: #93a1a1;
         --dim: #586e75;
         --rule: #2e6070;
+        --panel: #15222b;
         --cream: #cf7a64;
+        --orange: #ffb45d;
+        --teal: #2aa198;
       }
 
       * { box-sizing: border-box; }
@@ -95,9 +98,9 @@
         display: grid;
         align-content: center;
         max-width: 920px;
-        min-height: calc(100vh - 76px - 104px);
+        min-height: calc(72vh - 76px);
         margin: 0 auto;
-        padding: 56px 0 64px;
+        padding: 46px 0 56px;
         text-align: center;
       }
 
@@ -159,6 +162,54 @@
         color: #111c24;
       }
 
+      .quickstart {
+        display: grid;
+        grid-template-columns: minmax(0, 0.92fr) minmax(320px, 1.08fr);
+        gap: 24px;
+        align-items: stretch;
+        margin: 0 0 56px;
+        border-top: 1px solid var(--rule);
+        padding-top: 46px;
+      }
+
+      .quickstart-copy { max-width: 420px; }
+      .eyebrow { color: var(--dim); font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+      h2 { margin: 12px 0 0; font-size: clamp(34px, 5vw, 58px); line-height: 1.02; letter-spacing: -0.045em; }
+      .quickstart-copy p { margin-top: 16px; color: var(--muted); font-size: 18px; line-height: 1.55; }
+
+      .steps { display: grid; gap: 12px; margin: 24px 0 0; padding: 0; list-style: none; }
+      .step { display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; color: var(--muted); }
+      .step-number { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--rule); border-radius: 999px; color: var(--orange); font-size: 13px; font-weight: 800; }
+      .step strong { display: block; color: var(--ink); font-size: 15px; }
+      .step span:last-child { display: block; margin-top: 3px; font-size: 14px; line-height: 1.45; }
+
+      .demo-card {
+        overflow: hidden;
+        border: 1px solid var(--rule);
+        border-radius: 22px;
+        background: rgba(21, 34, 43, 0.82);
+        box-shadow: 0 24px 80px -52px rgba(0, 0, 0, 0.85);
+      }
+
+      .demo-bar { display: flex; gap: 8px; align-items: center; height: 42px; border-bottom: 1px solid var(--rule); padding: 0 16px; }
+      .demo-dot { width: 9px; height: 9px; border-radius: 999px; background: #2e6070; }
+      .demo-body { display: grid; gap: 14px; padding: clamp(16px, 2.6vw, 22px); }
+      .demo-label { color: var(--dim); font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+
+      .demo-inputs { display: grid; gap: 10px; }
+      .demo-input { border: 1px solid rgba(46, 96, 112, 0.8); border-radius: 16px; background: #0f1b22; padding: 12px 14px; }
+      .demo-input small { display: block; color: var(--dim); font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+      .demo-input span { display: block; margin-top: 4px; color: var(--ink); font-size: 15px; }
+
+      .query-box { border: 1px solid rgba(42, 161, 152, 0.38); border-radius: 16px; background: rgba(42, 161, 152, 0.08); padding: 13px; color: var(--muted); font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; line-height: 1.65; }
+      .query-box strong { color: var(--teal); font-weight: 700; }
+
+      .results { display: grid; gap: 10px; }
+      .result { border: 1px solid rgba(46, 96, 112, 0.72); border-radius: 14px; background: #0f1b22; padding: 12px; }
+      .result-title { display: flex; justify-content: space-between; gap: 12px; color: var(--ink); font-size: 14px; font-weight: 700; }
+      .result-source { margin-top: 4px; color: var(--muted); font-size: 12px; }
+      .status-chip { align-self: start; border: 1px solid rgba(42, 161, 152, 0.48); border-radius: 999px; padding: 4px 8px; color: var(--teal); font-size: 11px; font-weight: 800; white-space: nowrap; }
+
       footer {
         display: flex;
         justify-content: space-between;
@@ -199,6 +250,8 @@
         h1 { font-size: 48px; line-height: 1; }
         .lead { margin-top: 22px; }
         .actions { margin-top: 30px; }
+        .quickstart { grid-template-columns: 1fr; margin-bottom: 48px; padding-top: 42px; }
+        .quickstart-copy { max-width: none; }
         footer { padding: 24px 0; }
       }
     </style>
@@ -207,6 +260,7 @@
     <div class="page">
       <header>
         <nav class="nav-left" aria-label="Primary navigation">
+          <a class="nav-link" href="#quickstart">Quickstart</a>
           <a class="nav-link" href="privacy.html">Privacy</a>
           <a class="nav-link" href="https://github.com/therealdavidbour/ebisu/issues">Support</a>
         </nav>
@@ -227,6 +281,38 @@
           <div class="actions">
             <a class="button primary" href="https://chromewebstore.google.com/detail/REPLACE_WITH_EXTENSION_ID">Add to Chrome</a>
             <a class="button" href="privacy.html">Privacy policy ↗</a>
+          </div>
+        </section>
+
+        <section class="quickstart" id="quickstart" aria-labelledby="quickstart-title">
+          <div class="quickstart-copy">
+            <div class="eyebrow">Quickstart</div>
+            <h2 id="quickstart-title">From install to source results.</h2>
+            <p>Ebisu turns a plain role and location into a focused Google search across supported ATS pages.</p>
+            <ol class="steps">
+              <li class="step"><span class="step-number">1</span><span><strong>Pin Ebisu in Chrome.</strong><span>After installing, open Chrome's Extensions menu and pin Ebisu so the popup is one click away.</span></span></li>
+              <li class="step"><span class="step-number">2</span><span><strong>Search from the popup.</strong><span>Enter <em>senior software engineer</em>, choose <em>Remote - United States</em>, then click <em>Go</em>.</span></span></li>
+              <li class="step"><span class="step-number">3</span><span><strong>Review source pages.</strong><span>Google opens ATS-hosted results. Ebisu adds Seen, Saved, and Applied controls where supported.</span></span></li>
+            </ol>
+          </div>
+
+          <div class="demo-card" aria-label="Example Ebisu quickstart flow">
+            <div class="demo-bar"><span class="demo-dot"></span><span class="demo-dot"></span><span class="demo-dot"></span></div>
+            <div class="demo-body">
+              <div>
+                <div class="demo-label">Popup search</div>
+                <div class="demo-inputs">
+                  <div class="demo-input"><small>Role</small><span>senior software engineer</span></div>
+                  <div class="demo-input"><small>Location</small><span>Remote - United States</span></div>
+                </div>
+              </div>
+              <div class="query-box"><strong>Google query</strong><br />Greenhouse OR Lever OR Ashby OR Workday<br />"senior software engineer" "remote" "United States"<br />-indeed -linkedin -glassdoor</div>
+              <div class="results">
+                <div class="demo-label">What appears</div>
+                <div class="result"><div class="result-title"><span>Senior Software Engineer</span><span class="status-chip">Seen</span></div><div class="result-source">jobs.lever.co</div></div>
+                <div class="result"><div class="result-title"><span>Senior Software Engineer, Platform</span><span class="status-chip">Save</span></div><div class="result-source">greenhouse.io</div></div>
+              </div>
+            </div>
           </div>
         </section>
       </main>
