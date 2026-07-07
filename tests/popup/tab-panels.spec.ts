@@ -71,3 +71,23 @@ test("clear history uses an in-popup Ebisu confirmation dialog", async ({ page }
   await page.getByRole("button", { name: "Close" }).click()
   await expect(page.getByRole("heading", { name: "Clear Ebisu history?" })).toHaveCount(0)
 })
+
+test("help button opens the Ebisu website", async ({ page }) => {
+  await page.addInitScript(() => {
+    ;(window as typeof window & { __lastOpenedUrl?: string }).open = ((url?: string | URL) => {
+      ;(window as typeof window & { __lastOpenedUrl?: string }).__lastOpenedUrl = String(url)
+      return null
+    }) as typeof window.open
+  })
+
+  await page.goto("/popup.html")
+  await expect(page.getByRole("heading", { name: "Ebisu" })).toBeVisible()
+
+  await page.getByRole("button", { name: "Open Ebisu help and privacy page" }).click()
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => (window as typeof window & { __lastOpenedUrl?: string }).__lastOpenedUrl)
+    )
+    .toBe("https://therealdavidbour.github.io/ebisu")
+})

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react"
-import { Download, ExternalLink, MapPin, Search, Trash2 } from "lucide-react"
+import { CircleHelp, Download, ExternalLink, MapPin, Search, Trash2 } from "lucide-react"
 
 import { DEFAULT_ATS_SITES } from "./ats"
 import { Badge } from "./components/ui/badge"
@@ -19,6 +19,7 @@ import "./style.css"
 
 const ACTIONABLE_STATUSES: JobStatus[] = ["seen", "saved", "applied"]
 const CONTROL_TABS = ["search", "saved", "advanced"] as const
+const HELP_URL = "https://therealdavidbour.github.io/ebisu"
 
 type ControlTab = (typeof CONTROL_TABS)[number]
 
@@ -243,18 +244,242 @@ export default function Popup() {
     setHighlightedLocationIndex(0)
   }, [location])
 
+  function renderTabContent(tab: ControlTab) {
+    if (tab === "search") {
+      return (
+        <div className="space-y-3">
+          <div className="relative w-full max-w-full overflow-x-clip">
+            <div className="overflow-hidden rounded-[1.4rem] border border-primary/30 bg-background/90 shadow-sm transition-colors focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/25">
+              <div className="flex min-w-0 items-center gap-2 px-3">
+                <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <Input
+                  id="roles"
+                  placeholder="Job title, keywords, or company"
+                  value={roles}
+                  onChange={(event) => setRoles(event.currentTarget.value)}
+                  className="min-w-0 h-12 rounded-none border-0 bg-transparent px-0 text-[13px] shadow-none placeholder:text-[13px] focus-visible:ring-0"
+                />
+              </div>
+              <div className="mx-3 h-px bg-border" />
+              <div className="flex min-w-0 items-center gap-2 px-3">
+                <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <Input
+                  id="location"
+                  placeholder="City, state, or remote"
+                  value={location}
+                  onChange={(event) => handleLocationChange(event.currentTarget.value)}
+                  onFocus={() => setLocationFocused(true)}
+                  onClick={() => setLocationFocused(true)}
+                  onBlur={() => window.setTimeout(() => setLocationFocused(false), 120)}
+                  onKeyDown={handleLocationKeyDown}
+                  className="min-w-0 h-11 rounded-none border-0 bg-transparent px-0 text-[13px] shadow-none placeholder:text-[13px] focus-visible:ring-0"
+                />
+              </div>
+            </div>
+
+            {showLocationSuggestions ? (
+              <div className="absolute left-0 right-0 top-full z-20 mt-2 w-full max-w-full overflow-hidden rounded-2xl border border-primary/20 bg-card shadow-shrine">
+                <div className="scrollbar-thin grid max-h-64 gap-px overflow-y-auto bg-border/60 p-px">
+                  {locationSuggestions.map((suggestion, index) => (
+                    <button
+                      key={suggestion.value}
+                      type="button"
+                      className={`flex w-full min-w-0 items-center justify-between gap-3 bg-card px-3 py-2.5 text-left transition-colors ${
+                        index === highlightedLocationIndex ? "bg-muted" : "hover:bg-muted"
+                      }`}
+                      onMouseDown={(event) => {
+                        event.preventDefault()
+                        selectLocationSuggestion(suggestion.value)
+                      }}
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm text-[#fdf6e3]">{suggestion.label}</span>
+                        <span className="block truncate text-xs text-muted-foreground">{suggestion.detail}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="grid gap-2">
+            <Button className="w-full" disabled={!query} onClick={search}>
+              Go
+            </Button>
+          </div>
+        </div>
+      )
+    }
+
+    if (tab === "saved") {
+      return (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-semibold leading-none tracking-tight text-[#fdf6e3]">History</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                type="button"
+                onClick={() => setShowClearHistoryConfirm(true)}
+                aria-label="Clear Ebisu history"
+                title="Clear Ebisu history"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                type="button"
+                disabled={allJobs.length === 0}
+                onClick={exportHistoryCsv}
+                aria-label="Export history as CSV"
+                title="Export history as CSV"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+              <select
+                className="h-9 w-[130px] rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                value={filter}
+                onChange={(event) => setFilter(event.currentTarget.value as JobStatus | "all")}
+              >
+                <option value="all">All</option>
+                {ACTIONABLE_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {STATUS_LABELS[status]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="scrollbar-thin grid max-h-[252px] gap-2 overflow-auto pr-1">
+            {visibleJobs.length === 0 ? (
+              <p className="rounded-lg border bg-background p-3 text-sm text-muted-foreground">No jobs yet.</p>
+            ) : (
+              visibleJobs.map((job) => (
+                <article className="rounded-xl border bg-background p-3" key={job.canonicalUrl}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 space-y-1">
+                      <strong className="line-clamp-2 text-sm leading-5">{job.title}</strong>
+                      <p className="truncate text-xs text-muted-foreground">{job.source}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {job.listingDate ? `Listed: ${job.listingDate}` : `Captured: ${formatHistoryDate(job.firstSeenAt)}`}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors ${STATUS_CLASSES[job.status]}`}
+                      onClick={() => {
+                        void cycleHistoryStatus(job)
+                      }}
+                      aria-label={`Change status from ${STATUS_LABELS[job.status]}`}
+                      title={`Click to change status from ${STATUS_LABELS[job.status]}`}
+                    >
+                      {STATUS_LABELS[job.status]}
+                    </button>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <Button className="gap-1.5" variant="outline" size="sm" onClick={() => openUrl(job.url)}>
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      Open
+                    </Button>
+                    <Button className="gap-1.5" variant="ghost" size="sm" onClick={() => removeJob(job.canonicalUrl)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Delete
+                    </Button>
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <section className="space-y-3 rounded-xl border bg-background p-3">
+        <h3 className="text-sm font-semibold text-[#fdf6e3]">Advanced Settings</h3>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="days">Days back</Label>
+          <Input id="days" min="1" type="number" value={days} onChange={(event) => setDays(event.currentTarget.value)} />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="excludedTerms">Excluded terms</Label>
+          <Input
+            id="excludedTerms"
+            placeholder="senior, principal, staff"
+            value={excludedTerms}
+            onChange={(event) => setExcludedTerms(event.currentTarget.value)}
+          />
+        </div>
+
+        <div className="space-y-2 rounded-lg border border-border/80 bg-card/40 p-2.5">
+          <label className="flex cursor-pointer items-start gap-2 text-sm leading-5">
+            <Checkbox
+              id="excludeAggregatorSites"
+              checked={excludeAggregatorSites}
+              onCheckedChange={(checked) => setExcludeAggregatorSites(checked === true)}
+            />
+            <span>
+              <span className="block font-medium text-[#fdf6e3]">Exclude job aggregators</span>
+              <span className="block text-xs text-muted-foreground">
+                Adds -site filters for {DEFAULT_AGGREGATOR_EXCLUSION_SITES.join(", ")}.
+              </span>
+            </span>
+          </label>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>ATS sites</Label>
+          <div className="relative">
+            <Button className="w-full justify-between" variant="outline" type="button" onClick={() => setShowAtsSites((current) => !current)}>
+              <span>{selectedSiteCount} selected</span>
+              <span className="text-muted-foreground">Select sites</span>
+            </Button>
+
+            {showAtsSites ? (
+              <div className="mt-2 grid gap-2 rounded-md border bg-card p-2 shadow-shrine">
+                {DEFAULT_ATS_SITES.map((site) => (
+                  <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted" key={site}>
+                    <Checkbox checked={selectedSites.includes(site)} onCheckedChange={() => toggleSite(site)} />
+                    {site}
+                  </label>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <Button className="w-full" variant="link" size="sm" type="button" onClick={() => setShowQuery((current) => !current)}>
+          {showQuery ? "Hide query" : "View query"}
+        </Button>
+
+        {showQuery ? (
+          <div className="space-y-1.5">
+            <Label htmlFor="query">Generated query</Label>
+            <Textarea id="query" readOnly value={query} className="min-h-28 font-mono text-xs leading-5" />
+          </div>
+        ) : null}
+      </section>
+    )
+  }
+
   return (
     <main className="min-w-[400px] max-w-[400px] space-y-3 bg-[linear-gradient(180deg,#111c24,#15222b)] p-3 text-[#b8bcc0]">
       <section className="overflow-hidden rounded-md border border-[#2e6070] bg-card shadow-[0_10px_30px_-18px_rgba(0,0,0,0.7)]">
-        <div className="relative p-4">
+        <div className="relative px-4 py-3.5">
           <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-[#2e6070]/20 blur-2xl" />
-          <div className="relative">
-            <div className="max-w-[320px]">
-              <h1 className="text-2xl font-black tracking-tight text-[#ff7b57]">Ebisu</h1>
-              <p className="mt-1 text-sm leading-5 text-muted-foreground">
-                Find jobs at the ATS source before they spread across job aggregators.
-              </p>
-            </div>
+          <div className="relative text-center">
+            <h1 className="text-[2.55rem] font-black leading-none tracking-[-0.06em] text-[#ff7b57]">Ebisu</h1>
+            <p className="mx-auto mt-1 max-w-[340px] text-[13px] leading-5 text-muted-foreground">
+              Find jobs at the ATS source before they spread across job aggregators.
+            </p>
           </div>
         </div>
       </section>
@@ -287,233 +512,10 @@ export default function Popup() {
 
         <CardContent className="relative p-4 pt-4">
           <section className="scrollbar-thin h-[320px] overflow-y-auto pr-1" data-testid="popup-tab-panel">
-            {activeTab === "search" ? (
-              <div className="space-y-3">
-                <div className="relative w-full max-w-full overflow-x-clip">
-                  <div className="overflow-hidden rounded-[1.4rem] border border-primary/30 bg-background/90 shadow-sm transition-colors focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/25">
-                    <div className="flex min-w-0 items-center gap-2 px-3">
-                      <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      <Input
-                        id="roles"
-                        placeholder="Job title, keywords, or company"
-                        value={roles}
-                        onChange={(event) => setRoles(event.currentTarget.value)}
-                        className="min-w-0 h-12 rounded-none border-0 bg-transparent px-0 text-[13px] shadow-none placeholder:text-[13px] focus-visible:ring-0"
-                      />
-                    </div>
-                    <div className="mx-3 h-px bg-border" />
-                    <div className="flex min-w-0 items-center gap-2 px-3">
-                      <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      <Input
-                        id="location"
-                        placeholder="City, state, or remote"
-                        value={location}
-                        onChange={(event) => handleLocationChange(event.currentTarget.value)}
-                        onFocus={() => setLocationFocused(true)}
-                        onClick={() => setLocationFocused(true)}
-                        onBlur={() => window.setTimeout(() => setLocationFocused(false), 120)}
-                        onKeyDown={handleLocationKeyDown}
-                        className="min-w-0 h-11 rounded-none border-0 bg-transparent px-0 text-[13px] shadow-none placeholder:text-[13px] focus-visible:ring-0"
-                      />
-                    </div>
-                  </div>
-
-                  {showLocationSuggestions ? (
-                    <div className="absolute left-0 right-0 top-full z-20 mt-2 w-full max-w-full overflow-hidden rounded-2xl border border-primary/20 bg-card shadow-shrine">
-                      <div className="scrollbar-thin grid max-h-64 gap-px overflow-y-auto bg-border/60 p-px">
-                        {locationSuggestions.map((suggestion, index) => (
-                          <button
-                            key={suggestion.value}
-                            type="button"
-                            className={`flex w-full min-w-0 items-center justify-between gap-3 bg-card px-3 py-2.5 text-left transition-colors ${
-                              index === highlightedLocationIndex ? "bg-muted" : "hover:bg-muted"
-                            }`}
-                            onMouseDown={(event) => {
-                              event.preventDefault()
-                              selectLocationSuggestion(suggestion.value)
-                            }}
-                          >
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-sm text-[#fdf6e3]">{suggestion.label}</span>
-                              <span className="block truncate text-xs text-muted-foreground">{suggestion.detail}</span>
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="grid gap-2">
-                  <Button className="w-full" disabled={!query} onClick={search}>
-                    Go
-                  </Button>
-                </div>
-              </div>
-            ) : activeTab === "saved" ? (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h3 className="text-base font-semibold leading-none tracking-tight text-[#fdf6e3]">History</h3>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      type="button"
-                      onClick={() => setShowClearHistoryConfirm(true)}
-                      aria-label="Clear Ebisu history"
-                      title="Clear Ebisu history"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      type="button"
-                      disabled={allJobs.length === 0}
-                      onClick={exportHistoryCsv}
-                      aria-label="Export history as CSV"
-                      title="Export history as CSV"
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                    <select
-                      className="h-9 w-[130px] rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                      value={filter}
-                      onChange={(event) => setFilter(event.currentTarget.value as JobStatus | "all")}
-                    >
-                      <option value="all">All</option>
-                      {ACTIONABLE_STATUSES.map((status) => (
-                        <option key={status} value={status}>
-                          {STATUS_LABELS[status]}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="scrollbar-thin grid max-h-[252px] gap-2 overflow-auto pr-1">
-                  {visibleJobs.length === 0 ? (
-                    <p className="rounded-lg border bg-background p-3 text-sm text-muted-foreground">No jobs yet.</p>
-                  ) : (
-                    visibleJobs.map((job) => (
-                      <article className="rounded-xl border bg-background p-3" key={job.canonicalUrl}>
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0 space-y-1">
-                            <strong className="line-clamp-2 text-sm leading-5">{job.title}</strong>
-                            <p className="truncate text-xs text-muted-foreground">{job.source}</p>
-                            <p className="truncate text-xs text-muted-foreground">
-                              {job.listingDate ? `Listed: ${job.listingDate}` : `Captured: ${formatHistoryDate(job.firstSeenAt)}`}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors ${STATUS_CLASSES[job.status]}`}
-                            onClick={() => {
-                              void cycleHistoryStatus(job)
-                            }}
-                            aria-label={`Change status from ${STATUS_LABELS[job.status]}`}
-                            title={`Click to change status from ${STATUS_LABELS[job.status]}`}
-                          >
-                            {STATUS_LABELS[job.status]}
-                          </button>
-                        </div>
-                        <div className="mt-3 flex gap-2">
-                          <Button className="gap-1.5" variant="outline" size="sm" onClick={() => openUrl(job.url)}>
-                            <ExternalLink className="h-3.5 w-3.5" />
-                            Open
-                          </Button>
-                          <Button className="gap-1.5" variant="ghost" size="sm" onClick={() => removeJob(job.canonicalUrl)}>
-                            <Trash2 className="h-3.5 w-3.5" />
-                            Delete
-                          </Button>
-                        </div>
-                      </article>
-                    ))
-                  )}
-                </div>
-              </div>
-            ) : (
-              <section className="space-y-3 rounded-xl border bg-background p-3">
-                <h3 className="text-sm font-semibold text-[#fdf6e3]">Advanced Settings</h3>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="days">Days back</Label>
-                  <Input
-                    id="days"
-                    min="1"
-                    type="number"
-                    value={days}
-                    onChange={(event) => setDays(event.currentTarget.value)}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="excludedTerms">Excluded terms</Label>
-                  <Input
-                    id="excludedTerms"
-                    placeholder="senior, principal, staff"
-                    value={excludedTerms}
-                    onChange={(event) => setExcludedTerms(event.currentTarget.value)}
-                  />
-                </div>
-
-                <div className="space-y-2 rounded-lg border border-border/80 bg-card/40 p-2.5">
-                  <label className="flex cursor-pointer items-start gap-2 text-sm leading-5">
-                    <Checkbox
-                      id="excludeAggregatorSites"
-                      checked={excludeAggregatorSites}
-                      onCheckedChange={(checked) => setExcludeAggregatorSites(checked === true)}
-                    />
-                    <span>
-                      <span className="block font-medium text-[#fdf6e3]">Exclude job aggregators</span>
-                      <span className="block text-xs text-muted-foreground">
-                        Adds -site filters for {DEFAULT_AGGREGATOR_EXCLUSION_SITES.join(", ")}.
-                      </span>
-                    </span>
-                  </label>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label>ATS sites</Label>
-                  <div className="relative">
-                    <Button
-                      className="w-full justify-between"
-                      variant="outline"
-                      type="button"
-                      onClick={() => setShowAtsSites((current) => !current)}
-                    >
-                      <span>{selectedSiteCount} selected</span>
-                      <span className="text-muted-foreground">Select sites</span>
-                    </Button>
-
-                    {showAtsSites ? (
-                      <div className="mt-2 grid gap-2 rounded-md border bg-card p-2 shadow-shrine">
-                        {DEFAULT_ATS_SITES.map((site) => (
-                          <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted" key={site}>
-                            <Checkbox checked={selectedSites.includes(site)} onCheckedChange={() => toggleSite(site)} />
-                            {site}
-                          </label>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-
-                <Button className="w-full" variant="link" size="sm" type="button" onClick={() => setShowQuery((current) => !current)}>
-                  {showQuery ? "Hide query" : "View query"}
-                </Button>
-
-                {showQuery ? (
-                  <div className="space-y-1.5">
-                    <Label htmlFor="query">Generated query</Label>
-                    <Textarea id="query" readOnly value={query} className="min-h-28 font-mono text-xs leading-5" />
-                  </div>
-                ) : null}
-              </section>
-            )}
-              </section>
+            <div key={activeTab} className="animate-tab-swipe-in motion-reduce:animate-none">
+              {renderTabContent(activeTab)}
+            </div>
+          </section>
           {showClearHistoryConfirm ? (
             <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/80 px-4 backdrop-blur-sm">
               <div className="w-full max-w-[320px] rounded-2xl border border-primary/20 bg-card p-4 shadow-shrine" role="dialog" aria-modal="true" aria-labelledby="clear-history-title">
@@ -545,6 +547,21 @@ export default function Popup() {
           ) : null}
         </CardContent>
       </Card>
+
+      <div className="flex">
+        <Button
+          type="button"
+          variant="outline"
+          className="h-11 gap-2 border-[#2e6070] bg-card/95 px-4 text-base font-semibold text-[#fdf6e3] hover:border-[#3b7d8f] hover:bg-[#1e4f5d]"
+          onClick={() => {
+            void openUrl(HELP_URL)
+          }}
+          aria-label="Open Ebisu help and privacy page"
+        >
+          <CircleHelp className="h-5 w-5 text-[#4fb7d4]" />
+          Help
+        </Button>
+      </div>
     </main>
   )
 }
