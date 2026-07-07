@@ -164,53 +164,92 @@
 
       .quickstart {
         display: grid;
-        grid-template-columns: minmax(0, 0.92fr) minmax(320px, 1.08fr);
-        gap: 24px;
-        align-items: stretch;
+        gap: 28px;
         margin: 0 0 56px;
         border-top: 1px solid var(--rule);
         padding-top: 46px;
       }
 
-      .quickstart-copy { max-width: 420px; }
+      .quickstart-copy { max-width: 720px; }
       .eyebrow { color: var(--dim); font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
       h2 { margin: 12px 0 0; font-size: clamp(34px, 5vw, 58px); line-height: 1.02; letter-spacing: -0.045em; }
       .quickstart-copy p { margin-top: 16px; color: var(--muted); font-size: 18px; line-height: 1.55; }
 
-      .steps { display: grid; gap: 12px; margin: 24px 0 0; padding: 0; list-style: none; }
-      .step { display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; color: var(--muted); }
-      .step-number { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--rule); border-radius: 999px; color: var(--orange); font-size: 13px; font-weight: 800; }
-      .step strong { display: block; color: var(--ink); font-size: 15px; }
-      .step span:last-child { display: block; margin-top: 3px; font-size: 14px; line-height: 1.45; }
+      .quickstart-flow { display: grid; gap: 24px; }
 
-      .demo-card {
-        overflow: hidden;
+      .quickstart-step {
+        display: grid;
+        grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+        gap: 24px;
+        align-items: center;
+      }
+
+      .quickstart-step.reverse { grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.82fr); }
+      .quickstart-step.reverse .quickstart-media { order: 1; }
+      .quickstart-step.reverse .quickstart-step-copy { order: 2; }
+
+      .quickstart-step-copy {
+        display: grid;
+        gap: 12px;
+        align-content: center;
+        max-width: 380px;
+      }
+
+      .quickstart-step.reverse .quickstart-step-copy { justify-self: end; }
+
+      .step-kicker {
+        color: var(--dim);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .step-heading-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .step-number {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
         border: 1px solid var(--rule);
-        border-radius: 22px;
-        background: rgba(21, 34, 43, 0.82);
+        border-radius: 999px;
+        color: var(--orange);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .step-heading {
+        margin: 0;
+        color: var(--ink);
+        font-size: clamp(24px, 3vw, 32px);
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+      }
+
+      .step-copy-body {
+        margin: 0;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.6;
+      }
+
+      .quickstart-media {
+        display: block;
+        width: 100%;
+        max-width: 720px;
+        height: auto;
+        border-radius: 18px;
+        border: 1px solid rgba(46, 96, 112, 0.72);
+        background: #0f1b22;
         box-shadow: 0 24px 80px -52px rgba(0, 0, 0, 0.85);
       }
 
-      .demo-bar { display: flex; gap: 8px; align-items: center; height: 42px; border-bottom: 1px solid var(--rule); padding: 0 16px; }
-      .demo-dot { width: 9px; height: 9px; border-radius: 999px; background: #2e6070; }
-      .demo-body { display: grid; gap: 14px; padding: clamp(16px, 2.6vw, 22px); }
-      .demo-label { color: var(--dim); font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-      .demo-image { display: block; width: min(100%, 420px); height: auto; margin-top: 10px; border-radius: 16px; }
-      .demo-caption { color: var(--muted); font-size: 14px; line-height: 1.5; }
-
-      .demo-inputs { display: grid; gap: 10px; }
-      .demo-input { border: 1px solid rgba(46, 96, 112, 0.8); border-radius: 16px; background: #0f1b22; padding: 12px 14px; }
-      .demo-input small { display: block; color: var(--dim); font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
-      .demo-input span { display: block; margin-top: 4px; color: var(--ink); font-size: 15px; }
-
-      .query-box { border: 1px solid rgba(42, 161, 152, 0.38); border-radius: 16px; background: rgba(42, 161, 152, 0.08); padding: 13px; color: var(--muted); font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; line-height: 1.65; }
-      .query-box strong { color: var(--teal); font-weight: 700; }
-
-      .results { display: grid; gap: 10px; }
-      .result { border: 1px solid rgba(46, 96, 112, 0.72); border-radius: 14px; background: #0f1b22; padding: 12px; }
-      .result-title { display: flex; justify-content: space-between; gap: 12px; color: var(--ink); font-size: 14px; font-weight: 700; }
-      .result-source { margin-top: 4px; color: var(--muted); font-size: 12px; }
-      .status-chip { align-self: start; border: 1px solid rgba(42, 161, 152, 0.48); border-radius: 999px; padding: 4px 8px; color: var(--teal); font-size: 11px; font-weight: 800; white-space: nowrap; }
+      .quickstart-media.compact { max-width: 360px; }
 
       footer {
         display: flex;
@@ -252,8 +291,15 @@
         h1 { font-size: 48px; line-height: 1; }
         .lead { margin-top: 22px; }
         .actions { margin-top: 30px; }
-        .quickstart { grid-template-columns: 1fr; margin-bottom: 48px; padding-top: 42px; }
+        .quickstart { margin-bottom: 48px; padding-top: 42px; }
         .quickstart-copy { max-width: none; }
+        .quickstart-step,
+        .quickstart-step.reverse { grid-template-columns: 1fr; gap: 16px; }
+        .quickstart-step.reverse .quickstart-media,
+        .quickstart-step.reverse .quickstart-step-copy { order: initial; }
+        .quickstart-step-copy,
+        .quickstart-step.reverse .quickstart-step-copy { max-width: none; justify-self: start; }
+        .quickstart-media { max-width: none; }
         footer { padding: 24px 0; }
       }
     </style>
@@ -289,37 +335,46 @@
         <section class="quickstart" id="quickstart" aria-labelledby="quickstart-title">
           <div class="quickstart-copy">
             <div class="eyebrow">Quickstart</div>
-            <h2 id="quickstart-title">From install to source results.</h2>
-            <p>Ebisu turns a plain role and location into a focused Google search across supported ATS pages.</p>
-            <ol class="steps">
-              <li class="step"><span class="step-number">1</span><span><strong>Pin Ebisu in Chrome.</strong><span>After installing, open Chrome's Extensions menu and pin Ebisu so the popup is one click away.</span></span></li>
-              <li class="step"><span class="step-number">2</span><span><strong>Search from the popup.</strong><span>Enter <em>senior software engineer</em>, choose <em>Remote - United States</em>, then click <em>Go</em>.</span></span></li>
-              <li class="step"><span class="step-number">3</span><span><strong>Review source pages.</strong><span>Google opens ATS-hosted results. Ebisu adds Seen, Saved, and Applied controls where supported.</span></span></li>
-            </ol>
+            <h2 id="quickstart-title">From search to saved opportunities.</h2>
+            <p>Ebisu turns a plain role and location into ATS-source Google results, then helps you save the roles worth revisiting.</p>
           </div>
 
-          <div class="demo-card" aria-label="Example Ebisu quickstart flow">
-            <div class="demo-bar"><span class="demo-dot"></span><span class="demo-dot"></span><span class="demo-dot"></span></div>
-            <div class="demo-body">
-              <div>
-                <div class="demo-label">Pin in Chrome</div>
-                <img class="demo-image" src="assets/pin-ebisu-browser.svg" alt="Chrome toolbar illustration with the Extensions menu open and Ebisu pinned" />
-                <p class="demo-caption">Open Chrome's Extensions menu, then click the pin icon next to Ebisu so the popup stays in your toolbar.</p>
-              </div>
-              <div>
-                <div class="demo-label">Popup search</div>
-                <div class="demo-inputs">
-                  <div class="demo-input"><small>Role</small><span>senior software engineer</span></div>
-                  <div class="demo-input"><small>Location</small><span>Remote - United States</span></div>
+          <div class="quickstart-flow" aria-label="Example Ebisu quickstart flow">
+            <article class="quickstart-step">
+              <div class="quickstart-step-copy">
+                <div class="step-kicker">Step 1</div>
+                <div class="step-heading-row">
+                  <span class="step-number">1</span>
+                  <h3 class="step-heading">Search from the popup</h3>
                 </div>
+                <p class="step-copy-body">Enter <em>senior software engineer</em>, keep <em>Remote - United States</em> selected, and click <em>Go</em> to launch a search aimed at supported ATS sources.</p>
               </div>
-              <div class="query-box"><strong>Google query</strong><br />Greenhouse OR Lever OR Ashby OR Workday<br />"senior software engineer" "remote" "United States"<br />-indeed -linkedin -glassdoor</div>
-              <div class="results">
-                <div class="demo-label">What appears</div>
-                <div class="result"><div class="result-title"><span>Senior Software Engineer</span><span class="status-chip">Seen</span></div><div class="result-source">jobs.lever.co</div></div>
-                <div class="result"><div class="result-title"><span>Senior Software Engineer, Platform</span><span class="status-chip">Save</span></div><div class="result-source">greenhouse.io</div></div>
+              <img class="quickstart-media compact" src="assets/senior1.png" alt="Ebisu popup with a senior software engineer search and remote United States selected" />
+            </article>
+
+            <article class="quickstart-step reverse">
+              <div class="quickstart-step-copy">
+                <div class="step-kicker">Step 2</div>
+                <div class="step-heading-row">
+                  <span class="step-number">2</span>
+                  <h3 class="step-heading">Review ATS-source results</h3>
+                </div>
+                <p class="step-copy-body">Google opens the direct Greenhouse, Lever, Ashby, and Workday results. Ebisu adds status controls inline so you can mark roles as seen, saved, or applied without losing momentum.</p>
               </div>
-            </div>
+              <img class="quickstart-media" src="assets/senior2.png" alt="Google ATS-source search results with Ebisu controls on job listings" />
+            </article>
+
+            <article class="quickstart-step">
+              <div class="quickstart-step-copy">
+                <div class="step-kicker">Step 3</div>
+                <div class="step-heading-row">
+                  <span class="step-number">3</span>
+                  <h3 class="step-heading">Track everything in History</h3>
+                </div>
+                <p class="step-copy-body">Saved roles stay inside Ebisu so you can reopen promising leads, clean up stale listings, and keep your search organized as you apply.</p>
+              </div>
+              <img class="quickstart-media" src="assets/senior3.png" alt="Ebisu History tab showing a saved senior software engineer role" />
+            </article>
           </div>
         </section>
       </main>
