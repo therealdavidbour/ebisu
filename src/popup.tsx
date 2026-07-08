@@ -552,13 +552,13 @@ export default function Popup() {
         <Button
           type="button"
           variant="outline"
-          className="h-11 gap-2 border-[#2e6070] bg-card/95 px-4 text-base font-semibold text-[#fdf6e3] hover:border-[#3b7d8f] hover:bg-[#1e4f5d]"
+          className="h-8 gap-1.5 border-[#2e6070] bg-card/95 px-3 text-sm font-semibold text-[#fdf6e3] hover:border-[#3b7d8f] hover:bg-[#1e4f5d]"
           onClick={() => {
             void openUrl(HELP_URL)
           }}
           aria-label="Open Ebisu help and privacy page"
         >
-          <CircleHelp className="h-5 w-5 text-[#4fb7d4]" />
+          <CircleHelp className="h-4 w-4 text-[#4fb7d4]" />
           Help
         </Button>
       </div>

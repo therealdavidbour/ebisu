@@ -83,7 +83,13 @@ test("help button opens the Ebisu website", async ({ page }) => {
   await page.goto("/popup.html")
   await expect(page.getByRole("heading", { name: "Ebisu" })).toBeVisible()
 
-  await page.getByRole("button", { name: "Open Ebisu help and privacy page" }).click()
+  const helpButton = page.getByRole("button", { name: "Open Ebisu help and privacy page" })
+  const helpButtonBox = await helpButton.boundingBox()
+
+  expect(helpButtonBox).not.toBeNull()
+  expect(Math.round(helpButtonBox!.height)).toBe(32)
+
+  await helpButton.click()
 
   await expect
     .poll(() =>
