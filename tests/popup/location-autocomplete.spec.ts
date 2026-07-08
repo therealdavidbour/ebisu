@@ -14,8 +14,7 @@ test("location autocomplete reopens while the field stays focused", async ({ pag
   await remoteSuggestion.click()
   await expect(location).toHaveValue("Remote")
 
-  await location.press("Meta+A")
-  await location.press("Backspace")
+  await location.fill("")
   await location.type("re")
 
   await expect(remoteSuggestion).toBeVisible()
