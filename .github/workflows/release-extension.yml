@@ -37,6 +37,9 @@ jobs:
       - name: Verify build inputs
         run: pnpm typecheck
 
+      - name: Build production extension
+        run: pnpm build
+
       - name: Build release package
         run: pnpm package
 
