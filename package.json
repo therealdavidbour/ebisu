@@ -2,7 +2,7 @@
   "name": "ebisu",
   "displayName": "Ebisu",
   "version": "0.0.1",
-  "description": "Ebisu surfaces openings directly from Greenhouse, Lever, Ashby, and other ATS platforms so you can discover fresh roles earlier and stay organized as you search.",
+  "description": "Ebisu finds fresh ATS job openings from Google results and helps you track roles as seen, saved, or applied.",
   "private": true,
   "scripts": {
     "dev": "plasmo dev",

@@ -7,6 +7,7 @@ test("published manifest does not request all URLs", async () => {
   const serialized = JSON.stringify(manifest)
 
   expect(serialized).not.toContain("<all_urls>")
+  expect(manifest.description.length).toBeLessThanOrEqual(132)
   expect(manifest.host_permissions).toEqual([
     "https://www.google.com/*",
     "https://greenhouse.io/*",
