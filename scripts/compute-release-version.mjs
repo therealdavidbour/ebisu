@@ -1,15 +1,15 @@
-import { readFile, writeFile } from "node:fs/promises"
+import { readFile } from "node:fs/promises"
 
 const packageJsonPath = new URL("../package.json", import.meta.url)
 const runNumber = process.env.GITHUB_RUN_NUMBER
 const runAttempt = process.env.GITHUB_RUN_ATTEMPT
 
 if (!runNumber) {
-  throw new Error("GITHUB_RUN_NUMBER is required to stamp a release version")
+  throw new Error("GITHUB_RUN_NUMBER is required to compute a release version")
 }
 
 if (!runAttempt) {
-  throw new Error("GITHUB_RUN_ATTEMPT is required to stamp a release version")
+  throw new Error("GITHUB_RUN_ATTEMPT is required to compute a release version")
 }
 
 const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8"))
@@ -26,10 +26,4 @@ if (!Number.isInteger(releaseBuild) || releaseBuild <= 0) {
   throw new Error(`Expected positive integer release build, got run=${runNumber} attempt=${runAttempt}`)
 }
 
-const releaseVersion = `${baseVersion}.${releaseBuild}`
-
-packageJson.version = releaseVersion
-
-await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`)
-
-process.stdout.write(`${releaseVersion}\n`)
+process.stdout.write(`${baseVersion}.${releaseBuild}\n`)
